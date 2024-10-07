@@ -9,3 +9,6 @@
 
 #HTML
 *.html
+
+#batch files
+*_batch*
