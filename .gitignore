@@ -1,2 +1,11 @@
 #environment
 .venv/
+
+#tar.gz file
+*.gz
+
+#meta file
+*.meta
+
+#HTML
+*.html
