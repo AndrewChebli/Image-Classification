@@ -27,7 +27,10 @@ from torchvision import datasets, transforms
 
 def transform_dataset():
     # Transform image size to 224 x 224 x 3
-    transform = transforms.Compose([transforms.Resize((224,224)), transforms.ToTensor()])
+    transform = transforms.Compose([transforms.Resize((224,224)),
+                                    transforms.ToTensor(),
+                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], #mean and std based on ImageNet
+                                                        std=[0.229, 0.224, 0.225])])
     return transform
 
 
