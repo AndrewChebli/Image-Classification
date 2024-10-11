@@ -1,12 +1,6 @@
 import torch
 from torchvision import datasets, transforms
-
-
-def transform_dataset():
-    # Transform image size to 224 x 224 x 3
-    transform = transforms.Compose([transforms.Resize((224,224)), transforms.ToTensor()])
-    return transform
-
+from models.resnet18_model import extract_features_from_dict
 
 def get_dataset(batch_size = 500):
     
@@ -21,10 +15,6 @@ def get_dataset(batch_size = 500):
     
     return data_loader
 
-import torch
-from torchvision import datasets, transforms
-
-
 def transform_dataset():
     # Transform image size to 224 x 224 x 3
     transform = transforms.Compose([transforms.Resize((224,224)),
@@ -32,7 +22,6 @@ def transform_dataset():
                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], #mean and std based on ImageNet
                                                         std=[0.229, 0.224, 0.225])])
     return transform
-
 
 def get_dataset(batch_size = 64):
     
@@ -92,3 +81,6 @@ if __name__ == "__main__":
     for label, images in test_image_label_dictionary.items():
         print(f"Label {label}: {len(images)} images")
 
+    print("----------------------------------------------------------")
+
+    _, _ = extract_features_from_dict(train_image_label_dictionary)
