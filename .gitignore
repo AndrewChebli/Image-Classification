@@ -12,3 +12,9 @@
 
 #batch files
 *_batch*
+
+#pyc files
+*.pyc
+
+#pt files
+*.pt
