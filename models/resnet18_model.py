@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 from torchvision.models import resnet18, ResNet18_Weights
+from sklearn.decomposition import PCA
 
 
 def get_resnet():
@@ -21,6 +22,11 @@ def extract_features(images):
         features = model(images)  # Pass the images through ResNet-18
         return features.flatten(start_dim=1)  # Flatten the output to (batch_size, 512)
 
+
+def reduce_size_with_pca(feature, n_components = 50):
+    pca = PCA(n_components=n_components)
+    reduced_feature = pca.fit_transform(feature)
+    return reduced_feature
 
 # Function to extract features directly from the images stored in the dictionary
 def extract_features_from_dict(image_label_dict):
@@ -46,6 +52,9 @@ def extract_features_from_dict(image_label_dict):
 
      # where we save the data
     save_folder = os.path.join('data', 'extracted_data')
+
+    all_features = reduce_size_with_pca(all_features.numpy(), n_components=50)
+    all_features = torch.tensor(all_features)  # Convert back to tensor after PCA
 
     # Create the folder if it does not exist
     if not os.path.exists(save_folder):

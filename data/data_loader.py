@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     build_label_image_dictionary(test_data_loader, 100)
 
-# Print the number of images for each label
+# Print the number of images for each label for training data
     for label, images in test_image_label_dictionary.items():
         print(f"Label {label}: {len(images)} images")
 
