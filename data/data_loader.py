@@ -1,6 +1,12 @@
 import torch
 from torchvision import datasets, transforms
-from models.Naive_Bayes_Section_3.resnet18_model import extract_features_from_dict
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from models.Naive_Bayes.resnet18_model import extract_features_from_dict
+
+
 
 
 def get_dataset(batch_size=500):
