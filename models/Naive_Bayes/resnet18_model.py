@@ -29,7 +29,7 @@ def reduce_size_with_pca(feature, n_components = 50):
     return reduced_feature
 
 # Function to extract features directly from the images stored in the dictionary
-def extract_features_from_dict(image_label_dict):
+def extract_features_from_dict(image_label_dict ,train = True):
     all_features = []
     all_labels = []
 
@@ -60,10 +60,14 @@ def extract_features_from_dict(image_label_dict):
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
-    # Path for saving the features and labels
-    features_save_path = os.path.join(save_folder, 'features.pt')
-    labels_save_path = os.path.join(save_folder, 'labels.pt')   
-
+    if train:
+        # Path for saving the features and labels
+        features_save_path = os.path.join(save_folder, 'features.pt')
+        labels_save_path = os.path.join(save_folder, 'labels.pt')   
+    else:
+        # Path for saving the features and labels
+        features_save_path = os.path.join(save_folder, 'features_test.pt')
+        labels_save_path = os.path.join(save_folder, 'labels_test.pt')   
     # Save the extraction to not re computate them every time
     torch.save(all_features, features_save_path)
     torch.save(all_labels, labels_save_path)

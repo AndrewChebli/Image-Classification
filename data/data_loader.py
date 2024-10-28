@@ -92,4 +92,7 @@ if __name__ == "__main__":
 
     print("----------------------------------------------------------")
 
-    _, _ = extract_features_from_dict(train_image_label_dictionary)
+    _, _ = extract_features_from_dict(train_image_label_dictionary, train=True)
+    print("----------------------------------------------------------")
+
+    _, _ = extract_features_from_dict(test_image_label_dictionary, train=False)
