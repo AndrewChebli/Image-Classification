@@ -50,27 +50,23 @@ def extract_features_from_dict(image_label_dict ,train = True):
     all_features = torch.vstack(all_features)
     all_labels = torch.tensor(all_labels)
 
-     # where we save the data
-    save_folder = os.path.join('data', 'extracted_data')
-
+    # Reduce feature size with PCA
     all_features = reduce_size_with_pca(all_features.numpy(), n_components=50)
     all_features = torch.tensor(all_features)  # Convert back to tensor after PCA
+
+    # where we save the data
+    save_folder = os.path.join('data', 'extracted_data')
 
     # Create the folder if it does not exist
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
     if train:
-        # Path for saving the features and labels
-        features_save_path = os.path.join(save_folder, 'features.pt')
-        labels_save_path = os.path.join(save_folder, 'labels.pt')   
+        save_path = os.path.join(save_folder, 'train_data.pt')
     else:
-        # Path for saving the features and labels
-        features_save_path = os.path.join(save_folder, 'features_test.pt')
-        labels_save_path = os.path.join(save_folder, 'labels_test.pt')   
-    # Save the extraction to not re computate them every time
-    torch.save(all_features, features_save_path)
-    torch.save(all_labels, labels_save_path)
+        save_path = os.path.join(save_folder, 'test_data.pt')
 
+    # Save features and labels as a dictionary
+    torch.save({'features': all_features, 'labels': all_labels}, save_path)
 
     return all_features, all_labels
