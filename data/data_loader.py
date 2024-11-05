@@ -7,22 +7,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.Naive_Bayes.resnet18_model import extract_features_from_dict
 
 
-
-
-def get_dataset(batch_size=500):
-
-    transform = transform_dataset()
-    # Download and load the training data
-    raw_data = datasets.CIFAR10(
-        root="data/images/transformed_data", train=True, download=True, transform=transform)
-    print(f"Total number of images in dataset: {len(raw_data)}")
-    print("downloading training images")
-    # Create a DataLoader
-    data_loader = torch.utils.data.DataLoader(raw_data, batch_size=batch_size)
-
-    return data_loader
-
-
 def transform_dataset():
     # Transform image size to 224 x 224 x 3
     transform = transforms.Compose([transforms.Resize((224, 224)),
@@ -82,17 +66,12 @@ if __name__ == "__main__":
     test_image_label_dictionary = build_label_image_dictionary(
         test_data_loader, 100)
 
-# Print the number of images for each label
+    # Print the number of images for each label
     print("---------------------- training data ----------------------")
-
     for label, images in train_image_label_dictionary.items():
         print(f"Label {label}: {len(images)} images")
 
     print("---------------------- testing data ----------------------")
-
-    build_label_image_dictionary(test_data_loader, 100)
-
-# Print the number of images for each label for training data
     for label, images in test_image_label_dictionary.items():
         print(f"Label {label}: {len(images)} images")
 
