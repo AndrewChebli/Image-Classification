@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 
 def get_resnet():
     #load pre trained model resnet 18
-    resnet18_model = resnet18(weights= ResNet18_Weights.IMAGENET1K_V1)
+    resnet18_model = resnet18(weights = ResNet18_Weights.DEFAULT)
 
     #remove last layer to only use feature extraction from the model
     newmodel = nn.Sequential(*(list(resnet18_model.children())[:-1]))
@@ -22,16 +22,17 @@ def extract_features(images):
         features = model(images)  # Pass the images through ResNet-18
         return features.flatten(start_dim=1)  # Flatten the output to (batch_size, 512)
 
-
-def reduce_size_with_pca(feature, n_components = 50):
-    pca = PCA(n_components=n_components)
-    reduced_feature = pca.fit_transform(feature)
-    return reduced_feature
+#global value for PCA
+pca = PCA(n_components=50)
 
 # Function to extract features directly from the images stored in the dictionary
 def extract_features_from_dict(image_label_dict ,train = True):
     all_features = []
     all_labels = []
+
+    # Load the model and set it to evaluation mode once
+    model = get_resnet()
+    model.eval()
 
     for label, images in image_label_dict.items():
         print(f"Extracting features for label: {label}")
@@ -40,7 +41,9 @@ def extract_features_from_dict(image_label_dict ,train = True):
         images = torch.stack(images)  # Combine list of images into a batch
         
         # Extract features using ResNet-18
-        features = extract_features(images)
+        with torch.no_grad():  # Disable gradient calculation for faster inference
+            features = model(images)  # Pass the images through ResNet-18
+            features = features.flatten(start_dim=1)  # Flatten the output to (batch_size, 512)
 
         # Append the features and corresponding labels
         all_features.append(features)
@@ -51,7 +54,13 @@ def extract_features_from_dict(image_label_dict ,train = True):
     all_labels = torch.tensor(all_labels)
 
     # Reduce feature size with PCA
-    all_features = reduce_size_with_pca(all_features.numpy(), n_components=50)
+    if train:
+        # Fit PCA on training data and transform it
+        all_features = pca.fit_transform(all_features.numpy())
+    else:
+        # Transform test data using the same PCA instance
+        all_features = pca.transform(all_features.numpy())
+
     all_features = torch.tensor(all_features)  # Convert back to tensor after PCA
 
     # where we save the data
