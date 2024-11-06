@@ -3,7 +3,6 @@ import numpy as np
 from torchvision.models import resnet18, ResNet18_Weights
 import torch.nn as nn
 import torchvision.transforms as transforms
-import resnet18_model
 import math
 
 class NaiveBayesModel:
@@ -86,7 +85,7 @@ class NaiveBayesModel:
         for feature_vector, true_label in zip(test_features, test_labels):
             # Predict the label using the trained model parameters
             predicted_label = self.predict(feature_vector, priors, mean_std)
-            print(f"predicted label: {predicted_label} vs true one was {true_label}")
+                # print(f"predicted label: {predicted_label} vs true one was {true_label}")
             
             # Compare prediction with the true label
             if predicted_label == true_label:
@@ -94,7 +93,7 @@ class NaiveBayesModel:
         
         # Calculate accuracy
         accuracy = correct_predictions / len(test_labels)
-        print(f"Accuracy: {accuracy * 100:.2f}%")
+        return accuracy * 100
 
 if __name__ == "__main__":
     naive_Bayes = NaiveBayesModel()
@@ -110,5 +109,7 @@ if __name__ == "__main__":
     mean_std = naive_Bayes.calculate_parameters(train_features, train_labels)
     
     # Evaluate the model on test data
-    naive_Bayes.evaluate_model(test_features, test_labels, mean_std, priors)
+    accuracy = naive_Bayes.evaluate_model(test_features, test_labels, mean_std, priors)
+
+    print(f"Accuracy: {accuracy:.2f}%")
 
