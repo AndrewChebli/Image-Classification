@@ -1,4 +1,6 @@
 import torch
+import os
+import pickle
 import numpy as np
 
 
@@ -116,6 +118,22 @@ class DecisionTreeClassifier:
         accuracy = np.sum(predictions == test_labels) / len(test_labels)
         return accuracy * 100
 
+    def save_model(self, filename):
+        # Ensure the output folder exists, if not, create it
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+        # Save the model to the specified file, overwriting it if it exists
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+        print(f"Model saved to {filename}")
+
+    @staticmethod
+    def load_model(filename):
+        with open(filename, 'rb') as f:
+            model = pickle.load(f)
+        print(f"Model loaded from {filename}")
+        return model
+
 
 if __name__ == "__main__":
     tree_classifier = DecisionTreeClassifier(max_depth=12)
@@ -133,3 +151,6 @@ if __name__ == "__main__":
     print("evaluation")
     accuracy = tree_classifier.evaluate_model(test_features, test_labels)
     print(f"Basic Python & NumPy Decision Tree Accuracy: {accuracy:.2f}%")
+
+    # Save model to file
+    tree_classifier.save_model('./output/decision_tree_model.pkl')

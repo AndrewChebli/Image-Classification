@@ -1,4 +1,6 @@
 import torch
+import pickle
+import os
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier as SklearnDecisionTree
 
@@ -28,6 +30,22 @@ class DecisionTreeModelSklearn:
         accuracy = self.model.score(test_features, test_labels) * 100
         return accuracy
 
+    def save_model(self, filename):
+        # Ensure the output folder exists, if not, create it
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+        # Save the model to the specified file, overwriting it if it exists
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+        print(f"Model saved to {filename}")
+
+    @staticmethod
+    def load_model(filename):
+        with open(filename, 'rb') as f:
+            model = pickle.load(f)
+        print(f"Model loaded from {filename}")
+        return model
+
 
 if __name__ == "__main__":
     sklearn_tree = DecisionTreeModelSklearn(max_depth=50)
@@ -42,3 +60,6 @@ if __name__ == "__main__":
     # Evaluate model
     accuracy = sklearn_tree.evaluate_model(test_features, test_labels)
     print(f"Scikit-learn Decision Tree Accuracy: {accuracy:.2f}%")
+
+    # Save model to file
+    sklearn_tree.save_model('./output/decision_tree_sklearn_model.pkl')
