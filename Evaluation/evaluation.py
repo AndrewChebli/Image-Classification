@@ -7,11 +7,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from datetime import datetime
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet
 from matplotlib.backends.backend_pdf import PdfPages
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -49,68 +44,36 @@ def evaluate_model(model, test_features, test_labels, model_name, pdf):
     plot_confusion_matrix(test_labels, predictions, model_name, pdf)
     return accuracy, precision, recall, f1
 
+def add_summary_to_pdf_report(results_df, pdf):
+    # Format values for display in the PDF table (3 decimal places and percentages)
+    results_df_display = results_df.copy()
+    for col in ["Accuracy", "Precision", "Recall", "F1 Score"]:
+        results_df_display[col] = (results_df_display[col]).round(3)
 
-def add_summary_to_pdf_report(results_df, output_file, pdf_plots_filename,pdf_filename):
-    current_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    # Ensure the directory exists for saving the report
-    output_dir = f'evaluation-output/{current_timestamp}'
-    os.makedirs(output_dir, exist_ok=True)
-    
-    pdf_filename = f"{output_dir}/{output_file}_summary.pdf"
-    document = SimpleDocTemplate(pdf_filename, pagesize=letter)
-    
-    # Create a list of elements to add to the document
-    elements = []
-    
-    # Add Confusion Matrices Section Title
-    plot_section_title = Paragraph("<b>Model Confusion Matrices:</b>", getSampleStyleSheet()['Heading2'])
-    elements.append(plot_section_title)
-    
-    # Add Confusion Matrix Plots
-    plot_description = Paragraph(f"Confusion matrices saved in the file: {pdf_plots_filename}", getSampleStyleSheet()['Normal'])
-    elements.append(plot_description)
-    
-    # Embed the plot images in the report (using the PdfPages for now)
-    try:
-        c = canvas.Canvas(pdf_filename, pagesize=letter)
-        c.drawString(100, 750, f"Confusion matrix plots are embedded as {pdf_plots_filename}.")
-        c.showPage()
-        c.save()
-    except Exception as e:
-        print(f"Error embedding plots: {e}")
-    
-    # Add a page for summary table after confusion matrices
-    elements.append(Paragraph("<b>Summary of Model Performance:</b>", getSampleStyleSheet()['Heading2']))
-    
-    # Prepare the data for the table (summary of results)
-    table_data = [["Model", "Accuracy", "Precision", "Recall", "F1 Score"]]
-    for row in results_df.values:
-        table_data.append([row[0], f"{row[1]:.4f}", f"{row[2]:.4f}", f"{row[3]:.4f}", f"{row[4]:.4f}"])
-    
-    # Create the summary table
-    table = Table(table_data)
-    
-    # Add table styling
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('TOPPADDING', (0, 1), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-    ]))
-    
-    # Add the table to the elements
-    elements.append(table)
-    
-    # Build and save the PDF
-    document.build(elements)
-    print(f"PDF report generated: {pdf_filename}")
+    # Create a figure to render the table as an image for the PDF
+    fig, ax = plt.subplots(figsize=(8, 2 + len(results_df_display) * 0.4))
+    ax.axis('tight')
+    ax.axis('off')
+
+    # Create the table from the formatted DataFrame
+    table = ax.table(cellText=results_df_display.values,
+                     colLabels=results_df_display.columns,
+                     cellLoc='center',
+                     loc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1.2, 1.2)
+
+    # Style the table headers
+    for j in range(len(results_df_display.columns)):
+        header_cell = table[(0, j)]
+        header_cell.set_text_props(weight='bold', color="white", backgroundcolor="gray")
+
+    # Add the table to the PDF
+    pdf.savefig(fig)
+    plt.close(fig)
+    print("Summary table added to PDF.")
+
 
 
 def evaluate_all_models():
@@ -121,11 +84,11 @@ def evaluate_all_models():
     output_file = f"Evaluation_Output"
 
     # Ensure the evaluation-output folder exists
-    if not os.path.exists("evaluation-output"):
-        os.makedirs("evaluation-output")
+    if not os.path.exists(f"evaluation-output/{current_timestamp}"):
+        os.makedirs(f"evaluation-output/{current_timestamp}")
 
     # Prepare PDF for plots
-    pdf_plots_filename = f"evaluation-output/{output_file}_Confusion_Matrices.pdf"
+    pdf_plots_filename = f"evaluation-output/{current_timestamp}/{output_file}_Confusion_Matrices_And_Summary.pdf"
     pdf = PdfPages(pdf_plots_filename)
     
     # Naive Bayes
@@ -160,15 +123,23 @@ def evaluate_all_models():
     # Create summary table
     results_df = pd.DataFrame(results, columns=["Model", "Accuracy", "Precision", "Recall", "F1 Score"])
 
-    # Save summary results to a CSV file
-    results_filename = f"evaluation-output/{output_file}_summary.csv"
-    results_df.to_csv(results_filename, index=False)
+      # Create summary table with 5 decimal places for CSV
+    results_df = pd.DataFrame(results, columns=["Model", "Accuracy", "Precision", "Recall", "F1 Score"])
+    results_df_csv = results_df.copy()
+    for col in ["Accuracy", "Precision", "Recall", "F1 Score"]:
+        results_df_csv[col] = results_df_csv[col].round(5)
+
+    # Save summary results to CSV with 5 decimal places
+    results_filename = f"evaluation-output/{current_timestamp}/{output_file}_summary.csv"
+    results_df_csv.to_csv(results_filename, index=False)
+
+    
+    
+    # Create the final report PDF
+    add_summary_to_pdf_report(results_df,pdf)
 
     # Finalize the PDF with the plots and the table
     pdf.close()
-    
-    # Create the final report PDF
-    add_summary_to_pdf_report(results_df, output_file, pdf_plots_filename)
 
     print("\nSummary of Model Performance:")
     print(results_df)
