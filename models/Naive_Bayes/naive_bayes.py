@@ -1,4 +1,5 @@
 import torch
+import os,sys,pickle
 import numpy as np
 from torchvision.models import resnet18, ResNet18_Weights
 import torch.nn as nn
@@ -6,7 +7,7 @@ import torchvision.transforms as transforms
 import math
 
 class NaiveBayesModel:
-
+    
     #load the features and labels
     def load_train_labels_features(self):
         data = torch.load('data/extracted_data/train_data.pt', weights_only=True)
@@ -94,6 +95,29 @@ class NaiveBayesModel:
         # Calculate accuracy
         accuracy = correct_predictions / len(test_labels)
         return accuracy * 100
+    
+
+    def save_model(self, filename):
+        # Ensure the output folder exists, if not, create it
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+        # Save the model parameters (priors and mean_std) to a file
+        with open(filename, 'wb') as f:
+            pickle.dump({'priors': self.priors, 'mean_std': self.mean_std}, f)
+        print(f"Model saved to {filename}")
+
+    @staticmethod
+    def load_model(filename):
+        # Load the model parameters from the file
+        with open(filename, 'rb') as f:
+            model_data = pickle.load(f)
+        
+        # Create a new NaiveBayesModel object and populate it with the loaded parameters
+        model = NaiveBayesModel()
+        model.priors = model_data['priors']
+        model.mean_std = model_data['mean_std']
+        print(f"Model loaded from {filename}")
+        return model
 
 if __name__ == "__main__":
     naive_Bayes = NaiveBayesModel()
@@ -104,12 +128,15 @@ if __name__ == "__main__":
     
     # Calculate priors (class probabilities)
     priors = naive_Bayes.calculate_probability_of_labels(train_labels)
-    
+    naive_Bayes.priors = priors
     # Calculate mean and standard deviation for each class
     mean_std = naive_Bayes.calculate_parameters(train_features, train_labels)
+    naive_Bayes.mean_std = mean_std
     
     # Evaluate the model on test data
     accuracy = naive_Bayes.evaluate_model(test_features, test_labels, mean_std, priors)
+    print(f"Naive Bayes Accuracy: {accuracy:.2f}%")
 
-    print(f"Accuracy: {accuracy:.2f}%")
+     # Save the trained model
+    naive_Bayes.save_model('./output/naive_bayes_model.pkl')
 

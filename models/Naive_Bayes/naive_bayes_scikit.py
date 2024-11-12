@@ -1,7 +1,7 @@
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
 import torch
-import numpy
+import numpy,os,sys,pickle
 
 class ScikitNaiveBayesModel():
     def __init__(self):
@@ -32,6 +32,28 @@ class ScikitNaiveBayesModel():
     def evaluate_model(self, y_prediction, test_labels):
         return accuracy_score(y_prediction, test_labels) * 100
 
+    def save_model(self, filename):
+        # Ensure the output folder exists, if not, create it
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+        # Save the model to a file
+        with open(filename, 'wb') as f:
+            pickle.dump(self.model, f)
+        print(f"Model saved to {filename}")
+
+    @staticmethod
+    def load_model(filename):
+        # Load the model from the file
+        with open(filename, 'rb') as f:
+            model = pickle.load(f)
+        
+        # Create a new ScikitNaiveBayesModel object and assign the loaded model
+        sk_model = ScikitNaiveBayesModel()
+        sk_model.model = model
+        print(f"Model loaded from {filename}")
+        return sk_model
+
+
 if __name__ == "__main__":
 
     skicit_model = ScikitNaiveBayesModel()
@@ -49,3 +71,7 @@ if __name__ == "__main__":
     # Evaluate accuracy
     scikit_accuracy = skicit_model.evaluate_model(y_prediction, test_labels)
     print(f"Scikit-Learn GaussianNB Accuracy: {scikit_accuracy:.2f}%")
+
+
+    # Save the trained model
+    skicit_model.save_model('./output/scikit_naive_bayes_model.pkl')
