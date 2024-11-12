@@ -56,27 +56,31 @@ class NaiveBayesModel:
             mean_std[label] = (mean, std_dev)
         return mean_std
 
-    def predict(self,feature_vector, label_probabilities, mean_std):
-        max_prob = -1
-        best_label = None
-        for label in label_probabilities:  # Loop over each class
-            prob = label_probabilities[label]  # Start with the prior probability of the class
-            
-            # Retrieve mean and std_dev for this class
-            mean, std_dev = mean_std[label]
-            
-            # Calculate the likelihood of this feature_vector under the current class
-            for i, feature in enumerate(feature_vector):
-                # Calculate the likelihood for feature i given the class
-                prob *= (1 / math.sqrt(2 * math.pi * std_dev[i] ** 2)) * math.exp(-((feature - mean[i]) ** 2) / (2 * std_dev[i] ** 2))
+   
+    def predict(self, test_features):
+        predictions = []
+        for feature_vector in test_features:
+            max_prob = -1
+            best_label = None
+            for label in self.priors:  # Loop over each class
+                prob = self.priors[label]  # Start with the prior probability of the class
 
-            # Check if this class has the highest probability so far
-            if prob > max_prob:
-                max_prob = prob
-                best_label = label
+                # Retrieve mean and std_dev for this class
+                mean, std_dev = self.mean_std[label]
+                
+                # Calculate the likelihood of this feature_vector under the current class
+                for i, feature in enumerate(feature_vector):
+                    # Calculate the likelihood for feature i given the class
+                    prob *= (1 / math.sqrt(2 * math.pi * std_dev[i] ** 2)) * math.exp(-((feature - mean[i]) ** 2) / (2 * std_dev[i] ** 2))
+
+                # Check if this class has the highest probability so far
+                if prob > max_prob:
+                    max_prob = prob
+                    best_label = label
+            
+            predictions.append(best_label)
         
-        return best_label
-
+        return predictions
 
     def evaluate_model(self,test_features, test_labels, mean_std, priors):
 

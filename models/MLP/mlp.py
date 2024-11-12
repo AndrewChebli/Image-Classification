@@ -70,7 +70,14 @@ class MLP(nn.Module):
             _, predicted = torch.max(outputs.data, 1)
             accuracy = (predicted == test_labels).sum().item() / len(test_labels)
         return accuracy * 100
-
+    
+    def predict(self, features):
+        self.eval()
+        with torch.no_grad():
+            outputs = self(features)
+            _, predicted = torch.max(outputs, 1)
+        return predicted
+    
     # Load data
 def load_data(file_path):
     data = torch.load(file_path)

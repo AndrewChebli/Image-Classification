@@ -30,6 +30,9 @@ class DecisionTreeModelSklearn:
         accuracy = self.model.score(test_features, test_labels) * 100
         return accuracy
 
+    def predict(self, features):
+        return self.model.predict(features)
+    
     def save_model(self, filename):
         # Ensure the output folder exists, if not, create it
         os.makedirs(os.path.dirname(filename), exist_ok=True)
