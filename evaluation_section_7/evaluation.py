@@ -1,9 +1,11 @@
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pickle
 import numpy as np
+import torch
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from models.MLP.mlp import MLP, load_data
 from models.Naive_Bayes.naive_bayes_scikit import ScikitNaiveBayesModel
 from models.Decision_Tree.decision_tree import DecisionTreeClassifier
 from models.Decision_Tree.decision_tree_scikit import DecisionTreeModelSklearn
@@ -39,6 +41,16 @@ def evaluate_decision_tree_sklearn_model():
     
     print(f"Scikit learn Decision Tree Accuracy: {accuracy:.2f}%")
 
+def evaluate_mlp_model():
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    loaded_model = MLP.load_model('./output/mlp_model.pth', input_size=50, hidden_size=512, num_classes=10).to(device)
+
+    test_features, test_labels = load_data('data/extracted_data/test_data.pt')
+    test_features, test_labels = test_features.to(device), test_labels.to(device)
+   
+    loaded_model_accuracy = loaded_model.evaluate_model(loaded_model, test_features, test_labels)
+    print(f'MLP Accuracy: {loaded_model_accuracy:.2f}%')
+
 
 if __name__ == "__main__":
     print("--------------------")
@@ -58,4 +70,11 @@ if __name__ == "__main__":
     print("--------------------")
     print("DECISION TREE - SCIKIT")
     evaluate_decision_tree_sklearn_model()
+
+    print("--------------------")
+    print("MLP")
+    evaluate_mlp_model()
+
+
+
 
