@@ -1,7 +1,7 @@
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
 import torch
-import numpy,os,sys,pickle
+import numpy,os,random,pickle
 
 class ScikitNaiveBayesModel():
     def __init__(self):
@@ -52,10 +52,23 @@ class ScikitNaiveBayesModel():
         sk_model.model = model
         print(f"Model loaded from {filename}")
         return sk_model
-
+def set_random_seeds(seed):
+    # Set the random seed for PyTorch
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed) #gpu seed
+    
+    # Set the random seed for NumPy
+    numpy.random.seed(seed)
+    
+    # Set the random seed
+    random.seed(seed)
+    
+    # Set the random seed for Scikit-learn
+    from sklearn.utils import check_random_state
+    check_random_state(seed)
 
 if __name__ == "__main__":
-
+    set_random_seeds(seed=88)
     skicit_model = ScikitNaiveBayesModel()
 
     # Load the saved training data and testing data

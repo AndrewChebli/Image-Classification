@@ -1,5 +1,5 @@
 import torch
-import os,sys,pickle
+import os,random,pickle
 import numpy as np
 from torchvision.models import resnet18, ResNet18_Weights
 import torch.nn as nn
@@ -82,15 +82,13 @@ class NaiveBayesModel:
         
         return predictions
 
-    def evaluate_model(self,test_features, test_labels, mean_std, priors):
-
+    def evaluate_model(self, test_features, test_labels, mean_std, priors):
         correct_predictions = 0
-        
+
         # Loop through each test sample
         for feature_vector, true_label in zip(test_features, test_labels):
             # Predict the label using the trained model parameters
-            predicted_label = self.predict(feature_vector, priors, mean_std)
-                # print(f"predicted label: {predicted_label} vs true one was {true_label}")
+            predicted_label = self.predict([feature_vector])[0]  # Get the prediction for the current feature vector
             
             # Compare prediction with the true label
             if predicted_label == true_label:
@@ -99,6 +97,7 @@ class NaiveBayesModel:
         # Calculate accuracy
         accuracy = correct_predictions / len(test_labels)
         return accuracy * 100
+
     
 
     def save_model(self, filename):
@@ -122,8 +121,23 @@ class NaiveBayesModel:
         model.mean_std = model_data['mean_std']
         print(f"Model loaded from {filename}")
         return model
+def set_random_seeds(seed):
+    # Set the random seed for PyTorch
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed) #gpu seed
+    
+    # Set the random seed for NumPy
+    np.random.seed(seed)
+    
+    # Set the random seed
+    random.seed(seed)
+    
+    # Set the random seed for Scikit-learn
+    from sklearn.utils import check_random_state
+    check_random_state(seed)
 
 if __name__ == "__main__":
+    set_random_seeds(seed=88)
     naive_Bayes = NaiveBayesModel()
 
     # Load training data

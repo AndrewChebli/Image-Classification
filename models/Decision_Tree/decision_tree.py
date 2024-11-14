@@ -1,3 +1,4 @@
+import random
 import torch
 import os
 import pickle
@@ -134,9 +135,25 @@ class DecisionTreeClassifier:
         print(f"Model loaded from {filename}")
         return model
 
+def set_random_seeds(seed):
+    # Set the random seed for PyTorch
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed) #gpu seed
+    
+    # Set the random seed for NumPy
+    np.random.seed(seed)
+    
+    # Set the random seed
+    random.seed(seed)
+    
+    # Set the random seed for Scikit-learn
+    from sklearn.utils import check_random_state
+    check_random_state(seed)
 
 if __name__ == "__main__":
-    tree_classifier = DecisionTreeClassifier(max_depth=12)
+    #8 is lucky number in china
+    set_random_seeds(seed=8)
+    tree_classifier = DecisionTreeClassifier(max_depth=50)
 
     # Load data
     print("loading")

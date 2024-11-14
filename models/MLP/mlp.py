@@ -1,3 +1,4 @@
+import random
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -85,9 +86,23 @@ def load_data(file_path):
     labels = data['labels']
     return features, labels
 
+def set_random_seeds(seed):
+    # Set the random seed for PyTorch
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed) #gpu seed
+    
+    # Set the random seed for NumPy
+    np.random.seed(seed)
+    
+    # Set the random seed
+    random.seed(seed)
+    
+    # Set the random seed for Scikit-learn
+    from sklearn.utils import check_random_state
+    check_random_state(seed)
 
-# Main function to set up data, model, and training
 if __name__ == "__main__":
+    set_random_seeds(seed=88)
     # Load training and testing data
     train_features, train_labels = load_data('data/extracted_data/train_data.pt')
     test_features, test_labels = load_data('data/extracted_data/test_data.pt')
