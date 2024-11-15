@@ -1,7 +1,7 @@
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score
 import torch
-import numpy
+import numpy,os,random,pickle
 
 class ScikitNaiveBayesModel():
     def __init__(self):
@@ -32,8 +32,43 @@ class ScikitNaiveBayesModel():
     def evaluate_model(self, y_prediction, test_labels):
         return accuracy_score(y_prediction, test_labels) * 100
 
-if __name__ == "__main__":
+    def save_model(self, filename):
+        # Ensure the output folder exists, if not, create it
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
 
+        # Save the model to a file
+        with open(filename, 'wb') as f:
+            pickle.dump(self.model, f)
+        print(f"Model saved to {filename}")
+
+    @staticmethod
+    def load_model(filename):
+        # Load the model from the file
+        with open(filename, 'rb') as f:
+            model = pickle.load(f)
+        
+        # Create a new ScikitNaiveBayesModel object and assign the loaded model
+        sk_model = ScikitNaiveBayesModel()
+        sk_model.model = model
+        print(f"Model loaded from {filename}")
+        return sk_model
+def set_random_seeds(seed):
+    # Set the random seed for PyTorch
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed) #gpu seed
+    
+    # Set the random seed for NumPy
+    numpy.random.seed(seed)
+    
+    # Set the random seed
+    random.seed(seed)
+    
+    # Set the random seed for Scikit-learn
+    from sklearn.utils import check_random_state
+    check_random_state(seed)
+
+if __name__ == "__main__":
+    set_random_seeds(seed=88)
     skicit_model = ScikitNaiveBayesModel()
 
     # Load the saved training data and testing data
@@ -49,3 +84,7 @@ if __name__ == "__main__":
     # Evaluate accuracy
     scikit_accuracy = skicit_model.evaluate_model(y_prediction, test_labels)
     print(f"Scikit-Learn GaussianNB Accuracy: {scikit_accuracy:.2f}%")
+
+
+    # Save the trained model
+    skicit_model.save_model('./output/scikit_naive_bayes_model.pkl')
