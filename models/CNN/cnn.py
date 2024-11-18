@@ -14,8 +14,7 @@ import PIL.Image as Image
 
 def cifar_loader(batch_size, shuffle_test=False):
     # Normalization values for CIFAR10 dataset
-    normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465],
-                                 std=[0.247, 0.243, 0.261])
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
     # Loading training dataset with data augmentation techniques
     train_dataset = datasets.CIFAR10('./data', train=True, download=True,
@@ -126,6 +125,65 @@ class CNN(nn.Module):
         #pass through the fully connected layers, classifier
         x = self.classifier(x)
         return x
+    
+    def train_model(self, train_loader, eval_loader, device, optimizer, criterion, num_epochs, save_path):
+        best_acc = 0
+        best_model = None
+
+        for epoch in range(num_epochs):
+            self.train() # set the model to train mode
+            running_loss = 0
+            for instances, labels in train_loader:
+                optimizer.zero_grad()
+                output = self(instances.to(device))
+                loss = criterion(output, labels.to(device))
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item()
+
+            self.eval() # set the model to evaluate mode
+            correct = 0
+            total = 0
+            with torch.no_grad():
+                for instances, labels in eval_loader:
+                    output = self(instances.to(device))
+                    predictions = torch.max(output, 1)[1]
+                    total += labels.size(0)
+                    correct += (predictions == labels.to(device)).sum().item()
+
+            acc = correct / total * 100
+            print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {loss.item():.4f}, Accuracy: {acc:.2f}%")
+
+            if acc > best_acc:
+                best_acc = acc
+                best_model = self.state_dict()
+
+        # Save the best model
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        torch.save(best_model, save_path)
+        print(f"Best model saved with accuracy {best_acc:.2f}%")
+    
+    def test_model(self, test_loader, device, criterion):
+        self.eval()  # Set the model to evaluation mode
+        test_loss = 0
+        total = 0
+        correct = 0
+
+        with torch.no_grad():  # Disable gradient computations
+            for instances, labels in test_loader:
+                instances, labels = instances.to(device), labels.to(device)
+                output = self(instances)  # Forward pass
+                loss = criterion(output, labels)  # Compute loss
+                test_loss += loss.item()
+
+                predictions = torch.max(output, 1)[1]  # Get the predicted class
+                correct += (predictions == labels).sum().item()
+                total += labels.size(0)
+
+        # Calculate and print test accuracy and loss
+        test_loss /= len(test_loader)
+        test_accuracy = correct / total * 100
+        print(f"Test Accuracy: {test_accuracy:.2f}%, Test Loss: {test_loss:.4f}")
 
 if __name__ == '__main__':
 
@@ -135,90 +193,31 @@ if __name__ == '__main__':
     # hidden_size = 50  # Number of hidden units
     output_size = 10  # Number of output classes (CIFAR-10 has 10 classes)
     num_epochs = 50
-    all_models=[]
 
 
     train_dataset, test_dataset = cifar_loader(batch_size)
 
     device = torch.device("mps" if torch.backends.mps.is_available() else "cuda:0" if torch.cuda.is_available() else "cpu")
     model = CNN(input_size, 10, output_size)
-    model = nn.DataParallel(model)
     model.to(device)
-    #model.load_state_dict(torch.load('path'))
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr = 0.001, momentum=0.9)
-    BestACC=0
     
     # Split the training dataset into 90% training and 10% evaluation
     train_size = int(0.9 * len(train_dataset))
     eval_size = len(train_dataset) - train_size
     train_subset, eval_subset = torch.utils.data.random_split(train_dataset, [train_size, eval_size])
+    
+    #to get the data in batches
+    train_loader = td.DataLoader(train_subset, batch_size=batch_size, shuffle=True, pin_memory=True)
+    eval_loader = td.DataLoader(eval_subset, batch_size=batch_size, shuffle=False, pin_memory=True)
+    test_loader = td.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
+    
+    action = input("Enter 'train' or 'test': ").strip().lower()
 
-    action = input("train or test?")
     if action == "train":
-        # to train the model
-        for epoch in range(num_epochs):
-            train_loader = td.DataLoader(train_subset, batch_size=batch_size, shuffle=True, pin_memory=True)
-            eval_loader = td.DataLoader(eval_subset, batch_size=batch_size, shuffle=False, pin_memory=True)
-
-            running_loss = 0
-            for instances, labels in train_loader:
-                optimizer.zero_grad()
-
-                output = model(instances.to(device))
-                loss = criterion(output, labels.to(device))
-                loss.backward()
-                optimizer.step()
-
-                running_loss += loss.item()
-
-            model.eval()
-            with torch.no_grad():
-                allsamps=0
-                rightPred=0
-
-                for instances, labels in eval_loader:
-                    output = model(instances.to(device))
-                    predictedClass=torch.max(output,1)
-                    allsamps+=output.size(0)
-                    rightPred+=(torch.max(output,1)[1]==labels.to(device)).sum()
-
-                ACC=float(rightPred)/float(allsamps)
-                print(f'Evaluation Accuracy is={ACC*100}, Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
-                if ACC>BestACC:
-                    BestACC=ACC
-                    all_models.append(model.state_dict())
-            model.train()
-        print(f'best accuracy for cnn is {BestACC*100}')
-        torch.save(all_models[-1], './output/cnn_model.pth')
-        
+        model.train_model(train_loader, eval_loader, device, optimizer, criterion, num_epochs, './output/cnn_model.pth')
     elif action == "test":
-        
-        # Load the best model
-        model_path = './output/cnn_model.pth'
-        model.load_state_dict(torch.load(model_path))
-        model.eval()  # Set the model to evaluation mode
-        print(f"Loaded the best model from {model_path}")
-
-        # Evaluate on the test dataset
-        test_correct = 0
-        test_total = 0
-        test_loss = 0
-
-        with torch.no_grad():  # Disable gradient computation
-            for instances, labels in test_dataset:
-                output = model(instances.to(device))  # Forward pass
-                loss = criterion(output, labels.to(device))  # Compute loss
-                test_loss += loss.item()
-                
-                predictions = torch.max(output, 1)[1]  # Get the predicted class
-                test_correct += (predictions == labels.to(device)).sum().item()
-                test_total += labels.size(0)
-
-        # Calculate and print test accuracy and loss
-        test_accuracy = test_correct / test_total * 100
-        test_loss /= len(test_dataset)
-        print(f"Test Accuracy: {test_accuracy:.2f}%")
-        print(f"Test Loss: {test_loss:.4f}")
-
+        model.load_state_dict(torch.load('./output/cnn_model.pth'))
+        model.test_model(test_loader, device, criterion)
