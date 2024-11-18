@@ -126,6 +126,16 @@ class CNN(nn.Module):
         x = self.classifier(x)
         return x
     
+    @staticmethod
+    def load_model(filename, input_size=3 * 32 * 32, hidden_size=10, num_classes=10):
+        # Initialize a new instance of the MLP model
+        model = CNN(input_size, hidden_size, num_classes)
+        
+        # Load the model parameters from the file
+        model.load_state_dict(torch.load(filename))
+        print(f"Model loaded from {filename}")
+        return model
+    
     def train_model(self, train_loader, eval_loader, device, optimizer, criterion, num_epochs, save_path):
         best_acc = 0
         best_model = None
