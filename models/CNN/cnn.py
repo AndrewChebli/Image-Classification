@@ -52,7 +52,7 @@ def cifar_loader(batch_size, shuffle_test=False):
                                  shuffle=True, pin_memory=True)
     test_loader = td.DataLoader(test_dataset, batch_size=batch_size,
                                 shuffle=shuffle_test, pin_memory=True)
-    return train_dataset, test_loader
+    return train_dataset, test_dataset
 
 
 class CNN(nn.Module):
@@ -138,8 +138,7 @@ if __name__ == '__main__':
     all_models=[]
 
 
-    train_dataset, test_loader = cifar_loader(batch_size)
-    _, test_loader = cifar_loader(test_batch_size)
+    train_dataset, test_dataset = cifar_loader(batch_size)
 
     device = torch.device("mps" if torch.backends.mps.is_available() else "cuda:0" if torch.cuda.is_available() else "cpu")
     model = CNN(input_size, 10, output_size)
@@ -208,7 +207,7 @@ if __name__ == '__main__':
         test_loss = 0
 
         with torch.no_grad():  # Disable gradient computation
-            for instances, labels in test_loader:
+            for instances, labels in test_dataset:
                 output = model(instances.to(device))  # Forward pass
                 loss = criterion(output, labels.to(device))  # Compute loss
                 test_loss += loss.item()
@@ -219,7 +218,7 @@ if __name__ == '__main__':
 
         # Calculate and print test accuracy and loss
         test_accuracy = test_correct / test_total * 100
-        test_loss /= len(test_loader)
+        test_loss /= len(test_dataset)
         print(f"Test Accuracy: {test_accuracy:.2f}%")
         print(f"Test Loss: {test_loss:.4f}")
 
