@@ -113,12 +113,15 @@ def evaluate_all_models():
     results.append(["Decision Tree Scikit", accuracy, precision, recall, f1])
 
     # MLP
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("mps" if torch.backends.mps.is_available() else "cuda:0" if torch.cuda.is_available() else "cpu")
     mlp_model = MLP.load_model('./output/mlp_model.pth', input_size=50, hidden_size=512, num_classes=10).to(device)
     test_features, test_labels = load_data('data/extracted_data/test_data.pt')
     test_features, test_labels = test_features.to(device), test_labels.to(device)
     accuracy, precision, recall, f1 = evaluate_model(mlp_model, test_features, test_labels, "MLP", pdf)
     results.append(["MLP", accuracy, precision, recall, f1])
+
+    #CNN
+    
 
     # Create summary table
     results_df = pd.DataFrame(results, columns=["Model", "Accuracy", "Precision", "Recall", "F1 Score"])
