@@ -54,3 +54,75 @@ def cifar_loader(batch_size, shuffle_test=False):
                                 shuffle=shuffle_test, pin_memory=True)
     return train_dataset, test_loader
 
+
+class CNN(nn.Module):
+    def __init__(self,input_size, hidden_size, output_size):
+        super().__init__()
+
+        self.features = nn.Sequential(
+            #layer 1:
+            nn.Conv2d(3, 64, 3, 1, 1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(True),
+            nn.MaxPool2d(2, 2),
+            
+            #layer 2
+            nn.Conv2d(64, 128, 3, 1, 1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(True),
+            nn.MaxPool2d(2, 2),
+            
+            #layer 3
+            nn.Conv2d(128, 256, 3, 1, 1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(True),
+            
+            #layer 4
+            nn.Conv2d(256, 256, 3, 1, 1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(True),
+            nn.MaxPool2d(2, 2), 
+            
+            #layer 5
+            nn.Conv2d(256, 512, 3, 1, 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(True), 
+            
+            #layer 6
+            nn.Conv2d(512, 512, 3, 1, 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(True),
+            nn.MaxPool2d(2, 2),   
+            
+            #layer 7
+            nn.Conv2d(512, 512, 3, 1, 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(True),  
+            
+            #layer 8
+            nn.Conv2d(512, 512, 3, 1, 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(True),
+            nn.MaxPool2d(2, 2)        
+        )
+        
+        self.classifier= nn.Sequential(
+            nn.Linear(512, 4096),
+            nn.ReLU(True),
+            nn.Dropout(0.5),
+            nn.Linear(4096, 4096),
+            nn.ReLU(True),
+            nn.Dropout(0.5),
+            nn.Linear(4096, 10)
+
+        )
+       
+
+    def forward(self, x):
+        # pass through the 8 convolutional layers
+        x = self.features(x)
+        # flatten the output
+        x = x.view(x.size(0), -1)
+        #pass through the fully connected layers, classifier
+        x = self.classifier(x)
+        return x
