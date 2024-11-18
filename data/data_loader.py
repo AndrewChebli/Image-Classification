@@ -1,7 +1,7 @@
-import torch
-from torchvision import datasets, transforms
-import sys
 import os
+import sys
+from torchvision import datasets, transforms
+import torch
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.Naive_Bayes.resnet18_model import extract_features_from_dict

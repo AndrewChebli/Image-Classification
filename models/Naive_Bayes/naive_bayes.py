@@ -1,4 +1,5 @@
 import torch
+import os,random,pickle
 import numpy as np
 from torchvision.models import resnet18, ResNet18_Weights
 import torch.nn as nn
@@ -6,7 +7,7 @@ import torchvision.transforms as transforms
 import math
 
 class NaiveBayesModel:
-
+    
     #load the features and labels
     def load_train_labels_features(self):
         data = torch.load('data/extracted_data/train_data.pt', weights_only=True)
@@ -55,37 +56,39 @@ class NaiveBayesModel:
             mean_std[label] = (mean, std_dev)
         return mean_std
 
-    def predict(self,feature_vector, label_probabilities, mean_std):
-        max_prob = -1
-        best_label = None
-        for label in label_probabilities:  # Loop over each class
-            prob = label_probabilities[label]  # Start with the prior probability of the class
-            
-            # Retrieve mean and std_dev for this class
-            mean, std_dev = mean_std[label]
-            
-            # Calculate the likelihood of this feature_vector under the current class
-            for i, feature in enumerate(feature_vector):
-                # Calculate the likelihood for feature i given the class
-                prob *= (1 / math.sqrt(2 * math.pi * std_dev[i] ** 2)) * math.exp(-((feature - mean[i]) ** 2) / (2 * std_dev[i] ** 2))
+   
+    def predict(self, test_features):
+        predictions = []
+        for feature_vector in test_features:
+            max_prob = -1
+            best_label = None
+            for label in self.priors:  # Loop over each class
+                prob = self.priors[label]  # Start with the prior probability of the class
 
-            # Check if this class has the highest probability so far
-            if prob > max_prob:
-                max_prob = prob
-                best_label = label
+                # Retrieve mean and std_dev for this class
+                mean, std_dev = self.mean_std[label]
+                
+                # Calculate the likelihood of this feature_vector under the current class
+                for i, feature in enumerate(feature_vector):
+                    # Calculate the likelihood for feature i given the class
+                    prob *= (1 / math.sqrt(2 * math.pi * std_dev[i] ** 2)) * math.exp(-((feature - mean[i]) ** 2) / (2 * std_dev[i] ** 2))
+
+                # Check if this class has the highest probability so far
+                if prob > max_prob:
+                    max_prob = prob
+                    best_label = label
+            
+            predictions.append(best_label)
         
-        return best_label
+        return predictions
 
-
-    def evaluate_model(self,test_features, test_labels, mean_std, priors):
-
+    def evaluate_model(self, test_features, test_labels, mean_std, priors):
         correct_predictions = 0
-        
+
         # Loop through each test sample
         for feature_vector, true_label in zip(test_features, test_labels):
             # Predict the label using the trained model parameters
-            predicted_label = self.predict(feature_vector, priors, mean_std)
-                # print(f"predicted label: {predicted_label} vs true one was {true_label}")
+            predicted_label = self.predict([feature_vector])[0]  # Get the prediction for the current feature vector
             
             # Compare prediction with the true label
             if predicted_label == true_label:
@@ -95,7 +98,46 @@ class NaiveBayesModel:
         accuracy = correct_predictions / len(test_labels)
         return accuracy * 100
 
+    
+
+    def save_model(self, filename):
+        # Ensure the output folder exists, if not, create it
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+        # Save the model parameters (priors and mean_std) to a file
+        with open(filename, 'wb') as f:
+            pickle.dump({'priors': self.priors, 'mean_std': self.mean_std}, f)
+        print(f"Model saved to {filename}")
+
+    @staticmethod
+    def load_model(filename):
+        # Load the model parameters from the file
+        with open(filename, 'rb') as f:
+            model_data = pickle.load(f)
+        
+        # Create a new NaiveBayesModel object and populate it with the loaded parameters
+        model = NaiveBayesModel()
+        model.priors = model_data['priors']
+        model.mean_std = model_data['mean_std']
+        print(f"Model loaded from {filename}")
+        return model
+def set_random_seeds(seed):
+    # Set the random seed for PyTorch
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed) #gpu seed
+    
+    # Set the random seed for NumPy
+    np.random.seed(seed)
+    
+    # Set the random seed
+    random.seed(seed)
+    
+    # Set the random seed for Scikit-learn
+    from sklearn.utils import check_random_state
+    check_random_state(seed)
+
 if __name__ == "__main__":
+    set_random_seeds(seed=88)
     naive_Bayes = NaiveBayesModel()
 
     # Load training data
@@ -104,12 +146,15 @@ if __name__ == "__main__":
     
     # Calculate priors (class probabilities)
     priors = naive_Bayes.calculate_probability_of_labels(train_labels)
-    
+    naive_Bayes.priors = priors
     # Calculate mean and standard deviation for each class
     mean_std = naive_Bayes.calculate_parameters(train_features, train_labels)
+    naive_Bayes.mean_std = mean_std
     
     # Evaluate the model on test data
     accuracy = naive_Bayes.evaluate_model(test_features, test_labels, mean_std, priors)
+    print(f"Naive Bayes Accuracy: {accuracy:.2f}%")
 
-    print(f"Accuracy: {accuracy:.2f}%")
+     # Save the trained model
+    naive_Bayes.save_model('./output/naive_bayes_model.pkl')
 
