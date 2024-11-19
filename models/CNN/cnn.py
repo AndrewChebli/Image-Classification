@@ -195,6 +195,16 @@ class CNN(nn.Module):
         test_accuracy = correct / total * 100
         print(f"Test Accuracy: {test_accuracy:.2f}%, Test Loss: {test_loss:.4f}")
 
+    def predict(self, test_loader, device):
+        self.eval()  # Set the model to evaluation mode
+        all_predictions = []
+        with torch.no_grad():  # Disable gradient computations
+            for instances, _ in test_loader:
+                instances = instances.to(device)
+                output = self(instances)  # Forward pass
+                predictions = torch.max(output, 1)[1]  # Get the predicted class
+                all_predictions.extend(predictions.cpu().numpy())
+        return all_predictions
 if __name__ == '__main__':
 
     batch_size = 32
