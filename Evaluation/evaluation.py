@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 import numpy as np
 import torch
@@ -44,6 +45,7 @@ def evaluate_model(model, test_features, test_labels, model_name, pdf):
     plot_confusion_matrix(test_labels, predictions, model_name, pdf)
     return accuracy, precision, recall, f1
 
+
 def add_summary_to_pdf_report(results_df, pdf):
     # Format values for display in the PDF table (3 decimal places and percentages)
     results_df_display = results_df.copy()
@@ -51,7 +53,7 @@ def add_summary_to_pdf_report(results_df, pdf):
         results_df_display[col] = (results_df_display[col]).round(3)
 
     # Create a figure to render the table as an image for the PDF
-    fig, ax = plt.subplots(figsize=(8, 2 + len(results_df_display) * 0.4))
+    fig, ax = plt.subplots(figsize=(10, 2 + len(results_df_display) * 0.8))
     ax.axis('tight')
     ax.axis('off')
 
@@ -62,7 +64,12 @@ def add_summary_to_pdf_report(results_df, pdf):
                      loc='center')
     table.auto_set_font_size(False)
     table.set_fontsize(10)
-    table.scale(1.2, 1.2)
+    table.scale(1, 3)
+
+     # Adjust the width of the first column
+    for i in range(len(results_df_display) + 1):  # +1 to include the header
+        cell = table[(i, 0)]  # (row, column), 0 for the first column
+        cell.set_width(0.399)  # Set a wider width for the first column
 
     # Style the table headers
     for j in range(len(results_df_display.columns)):
@@ -73,7 +80,6 @@ def add_summary_to_pdf_report(results_df, pdf):
     pdf.savefig(fig)
     plt.close(fig)
     print("Summary table added to PDF.")
-
 
 
 def evaluate_all_models():
@@ -103,22 +109,38 @@ def evaluate_all_models():
     results.append(["Naive Bayes Scikit", accuracy, precision, recall, f1])
 
     # Decision Tree
-    decision_tree_model = DecisionTreeClassifier.load_model('./output/decision_tree_model.pkl')
-    accuracy, precision, recall, f1 = evaluate_model(decision_tree_model, test_features, test_labels, "Decision Tree", pdf)
-    results.append(["Decision Tree", accuracy, precision, recall, f1])
+    max_depths = [10, 20, 50]
+    for max_depth in max_depths:
+        decision_tree_model = DecisionTreeClassifier.load_model(f'./output/decision_tree_model_{max_depth}.pkl')
+        accuracy, precision, recall, f1 = evaluate_model(decision_tree_model, test_features, test_labels, f"Decision Tree - Max Depth: {max_depth}", pdf)
+        results.append([f"Decision Tree - Max Depth: {max_depth}", accuracy, precision, recall, f1])
 
     # Scikit Decision Tree
-    decision_tree_sklearn_model = DecisionTreeModelSklearn.load_model('./output/decision_tree_sklearn_model.pkl')
-    accuracy, precision, recall, f1 = evaluate_model(decision_tree_sklearn_model, test_features, test_labels, "Decision Tree Scikit", pdf)
-    results.append(["Decision Tree Scikit", accuracy, precision, recall, f1])
+    max_depths = [10, 20, 50]
+    for max_depth in max_depths:
+        decision_tree_sklearn_model = DecisionTreeModelSklearn.load_model(f'./output/decision_tree_sklearn_model_{max_depth}.pkl')
+        accuracy, precision, recall, f1 = evaluate_model(decision_tree_sklearn_model, test_features, test_labels, f"Decision Tree Scikit - Max Depth: {max_depth}", pdf)
+        results.append([f"Decision Tree Scikit - Max Depth: {max_depth}", accuracy, precision, recall, f1])
 
     # MLP
+    experiments = [
+        {"hidden_sizes": [512, 512], "description": "2-layer"},
+        {"hidden_sizes": [512], "description": "1 hidden layer"},
+        {"hidden_sizes": [512, 512, 512], "description": "3-layer MLP"},
+        {"hidden_sizes": [256, 256], "description": "Smaller hidden layers"},
+        {"hidden_sizes": [1024, 1024], "description": "Larger hidden layers"}
+    ]
     device = torch.device("mps" if torch.backends.mps.is_available() else "cuda:0" if torch.cuda.is_available() else "cpu")
-    mlp_model = MLP.load_model('./output/mlp_model.pth', input_size=50, hidden_size=512, num_classes=10).to(device)
+   
+    # Define different configurations for experiments
+    
     test_features, test_labels = load_data('data/extracted_data/test_data.pt')
     test_features, test_labels = test_features.to(device), test_labels.to(device)
-    accuracy, precision, recall, f1 = evaluate_model(mlp_model, test_features, test_labels, "MLP", pdf)
-    results.append(["MLP", accuracy, precision, recall, f1])
+    for experiment in experiments:
+        model_path = f'./output/mlp_{experiment["description"].replace(" ", "_").lower()}.pth'
+        mlp_model = MLP.load_model(model_path, input_size=50, hidden_sizes=experiment["hidden_sizes"], num_classes=10).to(device)
+        accuracy, precision, recall, f1 = evaluate_model(mlp_model, test_features, test_labels, f'MLP - Network Depth: {experiment["description"]}',pdf)
+        results.append([f'MLP - Network Depth: {experiment["description"]}', accuracy, precision, recall, f1])
 
     #CNN
     
@@ -148,5 +170,11 @@ def evaluate_all_models():
     print(results_df)
 
 
+def set_random_seeds(seed=88):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 if __name__ == "__main__":
+    set_random_seeds()
     evaluate_all_models()

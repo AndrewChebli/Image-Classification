@@ -1,0 +1,14 @@
+Model,Accuracy,Precision,Recall,F1 Score
+Naive Bayes,0.793,0.79729,0.793,0.79347
+Naive Bayes Scikit,0.793,0.79729,0.793,0.79347
+Decision Tree - Max Depth: 10,0.603,0.60655,0.603,0.60237
+Decision Tree - Max Depth: 20,0.56,0.5665,0.56,0.56257
+Decision Tree - Max Depth: 50,0.589,0.59412,0.589,0.59055
+Decision Tree Scikit - Max Depth: 10,0.596,0.6034,0.596,0.59827
+Decision Tree Scikit - Max Depth: 20,0.581,0.58509,0.581,0.58138
+Decision Tree Scikit - Max Depth: 50,0.58,0.5807,0.58,0.57959
+MLP - Network Depth: 2-layer,0.777,0.77609,0.777,0.77587
+MLP - Network Depth: 1 hidden layer,0.756,0.75827,0.756,0.75433
+MLP - Network Depth: 3-layer MLP,0.778,0.78174,0.778,0.7766
+MLP - Network Depth: Smaller hidden layers,0.734,0.7397,0.734,0.7284
+MLP - Network Depth: Larger hidden layers,0.797,0.80034,0.797,0.79652

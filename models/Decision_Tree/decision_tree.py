@@ -11,15 +11,13 @@ class DecisionTreeClassifier:
         self.tree = None
 
     def load_train_labels_features(self):
-        data = torch.load(
-            'data/extracted_data/train_data.pt', weights_only=True)
+        data = torch.load('data/extracted_data/train_data.pt', weights_only=True)
         train_features = data['features'].numpy()
         train_labels = data['labels'].numpy()
         return train_features, train_labels
 
     def load_test_labels_features(self):
-        data = torch.load('data/extracted_data/test_data.pt',
-                          weights_only=True)
+        data = torch.load('data/extracted_data/test_data.pt', weights_only=True)
         test_features = data['features'].numpy()
         test_labels = data['labels'].numpy()
         return test_features, test_labels
@@ -31,9 +29,7 @@ class DecisionTreeClassifier:
             size = len(group)
             if size == 0:
                 continue
-            # Use NumPy for efficient Gini calculation
-            counts = np.bincount([row[-1]
-                                 for row in group], minlength=len(classes))
+            counts = np.bincount([row[-1] for row in group], minlength=len(classes))
             probabilities = counts / size
             gini += (1.0 - np.sum(probabilities ** 2)) * (size / n_instances)
         return gini
@@ -51,10 +47,8 @@ class DecisionTreeClassifier:
         class_values = list(set(row[-1] for row in dataset))
         b_index, b_value, b_score, b_groups = 999, 999, 999, None
         for index in range(len(dataset[0]) - 1):
-            # Sample a limited number of unique values for the feature to reduce complexity
             unique_values = np.unique([row[index] for row in dataset])
-            sampled_values = np.random.choice(
-                unique_values, size=min(10, len(unique_values)), replace=False)
+            sampled_values = np.random.choice(unique_values, size=min(10, len(unique_values)), replace=False)
             for value in sampled_values:
                 groups = self.test_split(index, value, dataset)
                 gini = self.gini_index(groups, class_values)
@@ -73,8 +67,7 @@ class DecisionTreeClassifier:
             node['left'] = node['right'] = self.to_terminal(left + right)
             return
         if depth >= self.max_depth:
-            node['left'], node['right'] = self.to_terminal(
-                left), self.to_terminal(right)
+            node['left'], node['right'] = self.to_terminal(left), self.to_terminal(right)
             return
         if len(left) <= 1:
             node['left'] = self.to_terminal(left)
@@ -109,21 +102,16 @@ class DecisionTreeClassifier:
                 return node['right']
 
     def predict(self, test_features):
-        predictions = [self.predict_row(self.tree, row)
-                       for row in test_features]
+        predictions = [self.predict_row(self.tree, row) for row in test_features]
         return predictions
 
     def evaluate_model(self, test_features, test_labels):
-
         predictions = self.predict(test_features)
         accuracy = np.sum(predictions == test_labels) / len(test_labels)
         return accuracy * 100
 
     def save_model(self, filename):
-        # Ensure the output folder exists, if not, create it
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-
-        # Save the model to the specified file, overwriting it if it exists
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
         print(f"Model saved to {filename}")
@@ -135,39 +123,21 @@ class DecisionTreeClassifier:
         print(f"Model loaded from {filename}")
         return model
 
-def set_random_seeds(seed):
-    # Set the random seed for PyTorch
+
+def set_random_seeds(seed=88):
     torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed) #gpu seed
-    
-    # Set the random seed for NumPy
     np.random.seed(seed)
-    
-    # Set the random seed
     random.seed(seed)
-    
-    # Set the random seed for Scikit-learn
-    from sklearn.utils import check_random_state
-    check_random_state(seed)
 
 if __name__ == "__main__":
-    #8 is lucky number in china
-    set_random_seeds(seed=8)
-    tree_classifier = DecisionTreeClassifier(max_depth=50)
-
-    # Load data
-    print("loading")
-    train_features, train_labels = tree_classifier.load_train_labels_features()
-    test_features, test_labels = tree_classifier.load_test_labels_features()
-
-    # Train model
-    print("train model - fitting")
-    tree_classifier.fit(train_features, train_labels)
-
-    # Evaluate model
-    print("evaluation")
-    accuracy = tree_classifier.evaluate_model(test_features, test_labels)
-    print(f"Basic Python & NumPy Decision Tree Accuracy: {accuracy:.2f}%")
-
-    # Save model to file
-    tree_classifier.save_model('./output/decision_tree_model.pkl')
+    set_random_seeds()
+    max_depths = [10, 20, 50]
+    for max_depth in max_depths:
+        tree_classifier = DecisionTreeClassifier(max_depth=max_depth)
+        train_features, train_labels = tree_classifier.load_train_labels_features()
+        test_features, test_labels = tree_classifier.load_test_labels_features()
+        tree_classifier.fit(train_features, train_labels)
+        accuracy = tree_classifier.evaluate_model(test_features, test_labels)
+        tree_classifier.save_model(f'./output/decision_tree_model_{max_depth}.pkl')
+        print(f"Decision Tree with max_depth={max_depth} Accuracy: {accuracy:.2f}%")
+   

@@ -1,6 +1,0 @@
-Model,Accuracy,Precision,Recall,F1 Score
-Naive Bayes,0.793,0.79729,0.793,0.79347
-Naive Bayes Scikit,0.793,0.79729,0.793,0.79347
-Decision Tree,0.597,0.60093,0.597,0.59672
-Decision Tree Scikit,0.574,0.57585,0.574,0.57352
-MLP,0.78,0.78206,0.78,0.77926
