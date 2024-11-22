@@ -67,7 +67,7 @@ def set_random_seeds(seed):
     from sklearn.utils import check_random_state
     check_random_state(seed)
 
-if __name__ == "__main__":
+def main():
     set_random_seeds(seed=88)
     skicit_model = ScikitNaiveBayesModel()
 
@@ -88,3 +88,6 @@ if __name__ == "__main__":
 
     # Save the trained model
     skicit_model.save_model('./output/scikit_naive_bayes_model.pkl')
+
+if __name__ == "__main__":
+    main()

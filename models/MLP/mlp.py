@@ -82,7 +82,8 @@ def set_random_seeds(seed=88):
     np.random.seed(seed)
     random.seed(seed)
 
-if __name__ == "__main__":
+
+def main():
     set_random_seeds()
 
     # Load data
@@ -118,3 +119,6 @@ if __name__ == "__main__":
         # Save model
         filename = f'./output/mlp_{experiment["description"].replace(" ", "_").lower()}.pth'
         mlp.save_model(filename)
+
+if __name__ == "__main__":
+    main()

@@ -175,6 +175,10 @@ def set_random_seeds(seed=88):
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     random.seed(seed)
-if __name__ == "__main__":
+
+def main():
     set_random_seeds()
     evaluate_all_models()
+
+if __name__ == "__main__":
+   main()

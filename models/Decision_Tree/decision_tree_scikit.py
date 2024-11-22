@@ -51,7 +51,7 @@ def set_random_seeds(seed=88):
     np.random.seed(seed)
     random.seed(seed)
 
-if __name__ == "__main__":
+def main():
     set_random_seeds()
     max_depths = [10, 20, 50]
     for max_depth in max_depths:
@@ -62,4 +62,7 @@ if __name__ == "__main__":
         accuracy = sklearn_tree.evaluate_model(test_features, test_labels)
         sklearn_tree.save_model(f'./output/decision_tree_sklearn_model_{max_depth}.pkl')
         print(f"Scikit-learn Decision Tree with max_depth={max_depth} Accuracy: {accuracy:.2f}%")
+
+if __name__ == "__main__":
+    main()
     

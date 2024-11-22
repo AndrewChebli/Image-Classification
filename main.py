@@ -1,6 +1,6 @@
-import torch
-from models.Naive_Bayes.naive_bayes import NaiveBayesModel
-from models.Naive_Bayes.naive_bayes_scikit import ScikitNaiveBayesModel
+# import torch
+# from models.Naive_Bayes.naive_bayes import NaiveBayesModel
+# from models.Naive_Bayes.naive_bayes_scikit import ScikitNaiveBayesModel
 
 # def load_train_labels_features():
 #     data = torch.load('data/extracted_data/train_data.pt', weights_only=True)
@@ -42,13 +42,13 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from NaivesBayes.NaiveBayesModel import main as naive_bayes_main
-from naive_bayes_scikit import main as naive_bayes_scikit_main
-from decision_tree import main as decision_tree_main
-from decision_tree_scikit import main as decision_tree_scikit_main
-from mlp import main as mlp_main
-from cnn import main as cnn_main
-from evaluation import evaluate_model
+from models.Naive_Bayes.naive_bayes import main as naive_bayes_main
+from models.Naive_Bayes.naive_bayes_scikit import main as naive_bayes_scikit_main
+from models.Decision_Tree.decision_tree import main as decision_tree_main
+from models.Decision_Tree.decision_tree_scikit import main as decision_tree_scikit_main
+from models.MLP.mlp import main as mlp_main
+# from models.CNN.cnn import main as cnn_main
+from Evaluation.evaluation import main as evaluate_all_models
 
 def display_menu():
     """Display the main menu options to the user."""
@@ -84,10 +84,11 @@ def handle_user_input(choice):
         mlp_main()  # Calls the main function of the MLP model
     elif choice == "6":
         print("\nRunning CNN Model...\n")
-        cnn_main()  # Calls the main function of the CNN model
+        # cnn_main()  # Calls the main function of the CNN model
     elif choice == "7":
         print("\nRunning Evaluation Script...\n")
-        evaluate_model()  # Calls the evaluation script
+        print(f"Current Working Directory: {os.getcwd()}")
+        evaluate_all_models()  # Calls the evaluation script
     elif choice == "8":
         print("\nExiting the program...")
         sys.exit()  # Exits the program
