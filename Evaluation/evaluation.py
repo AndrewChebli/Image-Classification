@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from datetime import datetime
 from matplotlib.backends.backend_pdf import PdfPages
+import torch.utils.data as td
+import torch.nn as nn
+import pickle
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.MLP.mlp import MLP, load_data
@@ -16,6 +19,7 @@ from models.Naive_Bayes.naive_bayes_scikit import ScikitNaiveBayesModel
 from models.Decision_Tree.decision_tree import DecisionTreeClassifier
 from models.Decision_Tree.decision_tree_scikit import DecisionTreeModelSklearn
 from models.Naive_Bayes.naive_bayes import NaiveBayesModel
+from models.CNN.cnn import CNN, cifar_loader, remove_last_layer, add_extra_conv_layer
 
 
 def plot_confusion_matrix(y_true, y_pred, model_name, pdf):
@@ -38,13 +42,38 @@ def calculate_metrics(y_true, y_pred):
     f1 = f1_score(y_true, y_pred, average="weighted")
     return accuracy, precision, recall, f1
 
-
 def evaluate_model(model, test_features, test_labels, model_name, pdf):
-    predictions = model.predict(test_features)
+    if hasattr(model, 'predict'):
+        predictions = model.predict(test_features)  # Call the predict method
+    else:
+        raise TypeError(f"The model '{model_name}' does not have a 'predict' method.")
+    
+    # Ensure test_labels and predictions are compatible (e.g., both NumPy arrays)
+    if isinstance(test_labels, torch.Tensor):
+        test_labels = test_labels.cpu().numpy()
+    if isinstance(predictions, torch.Tensor):
+        predictions = predictions.cpu().numpy()
+
     accuracy, precision, recall, f1 = calculate_metrics(test_labels, predictions)
     plot_confusion_matrix(test_labels, predictions, model_name, pdf)
     return accuracy, precision, recall, f1
 
+def evaluate_cnn_model(model, test_loader, device, model_name, pdf):
+    criterion = nn.CrossEntropyLoss()
+    model.eval()  # Set the model to evaluation mode
+    y_true, y_pred = [], []
+    with torch.no_grad():  # Disable gradient computations
+        for instances, labels in test_loader:
+            instances, labels = instances.to(device), labels.to(device)
+            output = model(instances)  # Forward pass
+            predictions = torch.max(output, 1)[1]  # Get the predicted class
+            y_true.extend(labels.cpu().numpy())
+            y_pred.extend(predictions.cpu().numpy())
+
+    # Calculate metrics
+    accuracy, precision, recall, f1 = calculate_metrics(y_true, y_pred)
+    plot_confusion_matrix(y_true, y_pred, model_name, pdf)
+    return accuracy, precision, recall, f1
 
 def add_summary_to_pdf_report(results_df, pdf):
     # Format values for display in the PDF table (3 decimal places and percentages)
@@ -143,7 +172,27 @@ def evaluate_all_models():
         results.append([f'MLP - Network Depth: {experiment["description"]}', accuracy, precision, recall, f1])
 
     #CNN
-    
+    _, test_dataset = cifar_loader(batch_size = 32)
+    test_loader = td.DataLoader(test_dataset, batch_size=32, shuffle=False, pin_memory=True)
+
+    models_dir = './output/'  # Directory where CNN models are saved
+    cnn_files = [f for f in os.listdir(models_dir) if f.startswith('cnn') and f.endswith('.pth')]
+    for cnn_file in cnn_files:
+        kernel_size = int(cnn_file.split('_')[3])
+        model = CNN(3 * 32 * 32, 10, kernel_size).to(device)
+
+        # Apply modifications based on filename
+        if "remove_last_layer" in cnn_file:
+            model = remove_last_layer(model)
+        elif "add_extra_layer" in cnn_file:
+            model = add_extra_conv_layer(model)
+
+        # Load model weights
+        model.load_state_dict(torch.load(os.path.join(models_dir, cnn_file)))
+
+        # Evaluate model
+        accuracy, precision, recall, f1 = evaluate_cnn_model(model, test_loader, device, cnn_file, pdf)
+        results.append([cnn_file, accuracy, precision, recall, f1])
 
     # Create summary table
     results_df = pd.DataFrame(results, columns=["Model", "Accuracy", "Precision", "Recall", "F1 Score"])
