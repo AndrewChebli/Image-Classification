@@ -138,6 +138,7 @@ class CNN(nn.Module):
         return model
     
     def train_model(self, train_loader, eval_loader, device, optimizer, criterion, num_epochs, save_path):
+        self.to(device)
         best_acc = 0
         best_model = None
         for epoch in range(num_epochs):
