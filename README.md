@@ -1,151 +1,149 @@
-# Image Classification on CIFAR-10 Dataset
+# Image Classification System
 
 ## Project Overview
 
-This project involves applying various machine learning models to classify images from the CIFAR-10 dataset. The models implemented include **Naive Bayes**, **Decision Tree**, **MLP (Multi-Layer Perceptron)**, and **CNN (Convolutional Neural Network)**. The goal is to explore the effectiveness of these models for image classification by evaluating their performance using accuracy, precision, recall, and F1-score metrics.
+This project implements an Image Classification System using various machine learning models including Naive Bayes, Decision Trees, Multilayer Perceptrons (MLP), and Convolutional Neural Networks (CNNs). The system supports training, evaluation, and prediction using these models on image datasets.
 
----
+## Project Structure
 
-## Table of Contents
+	|-- main.py: Entry point for the project. Provides a menu to select different models or the evaluation script.
+    |-- data/
+        |-- CIFAR-10 datasets and the necessary preprocessing scripts.
+        |-- data_loader.py: Script for loading and preprocessing the dataset.
+    |-- models/
+        |-- Naive_Bayes/
+            |-- naive_bayes.py: Custom implementation of Naive Bayes.
+            |-- naive_bayes_scikit.py: Scikit-learn implementation of Naive Bayes.
+            |-- resnet18_model.py: ResNet-18 feature extractor for advanced feature extraction.
+        |-- Decision_Tree/
+            |-- decision_tree.py: Custom implementation of Decision Tree.
+            |-- decision_tree_scikit.py: Scikit-learn implementation of Decision Tree.
+        |-- MLP/
+            |-- mlp.py: Implementation of Multilayer Perceptron (MLP) with customizable architecture.
+        |-- CNN/
+            |-- cnn.py: Convolutional Neural Network (CNN) implementation for image classification.
+    |-- Evaluation/
+        |-- evaluation.py: Evaluates all models and generates confusion matrices and metrics reports.
+    |-- output/
+        |-- Trained model files and evaluation reports.
+        |-- *.pth, *.pkl: Saved model weights and parameters.
+    |-- requirements.txt: Dependencies required to run the project.
+    |-- README.md: Project documentation.
+    |-- report/: Contains additional documentation and reporting files (if any).
 
-1. [Project Files](#project-files)
-2. [Data Preprocessing](#data-preprocessing)
-3. [Training and Evaluating Models](#training-and-evaluating-models)
-4. [Running the Code](#running-the-code)
-5. [Model Evaluation](#model-evaluation)
-6. [Requirements](#requirements)
-7. [License](#license)
+Setup Instructions
 
----
+Prerequisites
 
-## Project Files
+    Python 3.8 or higher installed along with pip.
 
-This project is structured as follows:
+Steps
 
-### `main_menu.py`
-- **Purpose**: This is the main script that runs the interactive menu for the user. It allows the user to choose between different models (Naive Bayes, Decision Tree, MLP, CNN) or run the evaluation script.
-- **Execution**: When executed, this script will display a menu for the user to select a model to run, or to run the evaluation script. It invokes the appropriate model training and evaluation scripts based on the user's input.
+	1.	Clone the repository to your local machine.
 
-### `naive_bayes.py`
-- **Purpose**: This file implements a custom Naive Bayes model for classification.
-- **Functionality**: It includes functions to calculate the prior probabilities of labels and the conditional probabilities for the features.
+git clone <repository_url>
+cd Image-Classification
 
-### `naive_bayes_scikit.py`
-- **Purpose**: This file implements the Naive Bayes model using the Scikit-Learn library.
-- **Functionality**: It uses Scikit-Learn's `GaussianNB` to train and predict on the CIFAR-10 dataset.
 
-### `decision_tree.py`
-- **Purpose**: This file contains a custom implementation of a Decision Tree model for classification.
-- **Functionality**: It implements a basic decision tree using a recursive approach to build the tree based on Gini impurity.
+	2.	Create and activate a virtual environment:
 
-### `decision_tree_scikit.py`
-- **Purpose**: This file implements a Decision Tree model using Scikit-Learn's `DecisionTreeClassifier`.
-- **Functionality**: It leverages Scikit-Learn's decision tree algorithms to train and predict on the CIFAR-10 dataset.
+python -m venv .venv
+source .venv/bin/activate (On Mac)
 
-### `mlp.py`
-- **Purpose**: This file defines a Multi-Layer Perceptron (MLP) for image classification.
-- **Functionality**: The MLP is constructed with multiple hidden layers, and it is trained using stochastic gradient descent (SGD).
 
-### `cnn.py`
-- **Purpose**: This file defines a Convolutional Neural Network (CNN) for image classification.
-- **Functionality**: It implements a VGG11 architecture for image classification, leveraging convolutional layers for feature extraction.
+	3.	Install the required dependencies:
 
-### `evaluation.py`
-- **Purpose**: This file contains functions to evaluate the performance of the models.
-- **Functionality**: It computes various evaluation metrics such as accuracy, precision, recall, and F1-score. It also includes confusion matrix generation.
+pip install -r requirements.txt
 
----
 
-## Data Preprocessing
+	4.	Download and preprocess the dataset (CIFAR-10 is used):
+	5.	The data_loader.py script handles the preprocessing.
 
-Before training the models, the CIFAR-10 dataset must be pre-processed to extract features and prepare the data.
 
-### Steps to Preprocess the Data
+## 1. Running the Main Menu
 
-1. **Load CIFAR-10 Dataset**: The CIFAR-10 dataset consists of 60,000 32x32 color images in 10 classes. First, ensure that the dataset is downloaded and placed in the correct directory.
+Run the project entry point:
 
-2. **Resizing Images**: To use the pre-trained ResNet-18 model for feature extraction, images are resized from 32x32 pixels to 224x224 pixels.
+python main.py
 
-3. **Feature Extraction with ResNet-18**:
-    - Use the pre-trained ResNet-18 model (pre-trained on ImageNet) to extract feature vectors of size 512x1 for each image.
-    - These feature vectors are then reduced to 50x1 dimensions using **Principal Component Analysis (PCA)** for better performance with traditional machine learning models.
+You will see a menu with the following options:
+	•	Run Naive Bayes Model (Custom/Scikit-Learn)
+	•	Run Decision Tree Model (Custom/Scikit-Learn)
+	•	Run MLP Model
+	•	Run CNN Model
+	•	Run Evaluation Script
+	•	Exit
 
-4. **Saving Preprocessed Data**: The extracted features and labels are saved in `.pt` files for both the training and testing datasets.
+Follow the prompts to select a model and perform actions like training, evaluation, or testing.
 
----
+## 2. Running Specific Models
 
-## Training and Evaluating Models
+### Naive Bayes (Custom):
+    python3 models/Naive_Bayes/naive_bayes.py
+### Naive Bayes (Scikit-Learn):
+    python3 models/Naive_Bayes/naive_bayes_scikit.py
+### Decision Tree (Custom):
+    python3 models/Decision_Tree/decision_tree.py
+### Decision Tree (Scikit-Learn):
+    python models/Decision_Tree/decision_tree_scikit.py
+### MLP:
+    python3 models/MLP/mlp.py
+### CNN:
+    python3 models/CNN/cnn.py
 
-### Step 1: Model Training
 
-To train the models, simply run the corresponding script via the menu interface or by invoking them directly.
 
-1. **Naive Bayes**:
-   - Custom implementation (`naive_bayes.py`).
-   - Scikit-Learn implementation (`naive_bayes_scikit.py`).
+## 3. Evaluating Models
 
-2. **Decision Tree**:
-   - Custom implementation (`decision_tree.py`).
-   - Scikit-Learn implementation (`decision_tree_scikit.py`).
+To generate evaluation reports:
 
-3. **MLP**:
-   - Defined and trained in `mlp.py`.
+    python Evaluation/evaluation.py
 
-4. **CNN**:
-   - VGG11 architecture defined and trained in `cnn.py`.
+## 4. Output and Reports
 
-### Step 2: Model Evaluation
+	•	Model weights are saved in the output/ directory with filenames reflecting their architecture and configurations.
+	•	Evaluation reports (confusion matrices and metrics summaries) are stored in evaluation-output/.
 
-Once models are trained, you can evaluate their performance by running the evaluation script:
-- **Evaluation Script** (`evaluation.py`): This will compute metrics such as accuracy, precision, recall, and F1-score, and display confusion matrices for each model.
+## Customization Notes:
+    - As seen in the MLP.py and decision tree models files, certain parameters like maximum depth or network architecture need to be updated manually in the code if changes are required. Be sure to modify these parameters directly in the respective files before execution. (ie: if you need to change the depth in the mlp file, and need that in the report, you will need to change it in the evaluation.py file as well.)
+    - Hyperparameter Tuning: Models like MLP and CNN allow tuning of hyperparameters like learning rate, batch size, and number of epochs. Update these values in their respective training functions if different hyperparameter settings are required. 
+Project Features
 
----
+	1.	Preprocessing: Automates loading and preprocessing of CIFAR-10 datasets.
+	2.	Model Training and Testing: Flexible training for Naive Bayes, Decision Trees, CNNs, and MLPs.
+	3.	Evaluation: Comprehensive performance evaluation using confusion matrices, accuracy, precision, recall, and F1 score.
+	4.	Modular Design: Each model is implemented in its own module for clarity and scalability.
+	5.	Reports: Automatically generated evaluation reports in PDF and CSV formats.
 
-## Running the Code
+### Instructions for Dataset
 
-To run the interactive menu and invoke model training, evaluation, and predictions, execute the following script:
+    - The CIFAR-10 dataset is automatically downloaded when the models are executed. Ensure your system has internet access during the first run.
 
-```bash
-python main_menu.py
-```
+## Example Commands
 
-This will display the following menu options:
+- To train and evaluate a Decision Tree model with a maximum depth of 10:
 
-1. **Run Naive Bayes Model (Custom)**: Runs the custom implementation of Naive Bayes.
-2. **Run Naive Bayes Model (Scikit-Learn)**: Runs the Scikit-Learn Naive Bayes model.
-3. **Run Decision Tree Model (Custom)**: Runs the custom implementation of Decision Tree.
-4. **Run Decision Tree Model (Scikit-Learn)**: Runs the Scikit-Learn Decision Tree model.
-5. **Run MLP Model**: Runs the MLP model.
-6. **Run CNN Model**: Runs the CNN (VGG11) model.
-7. **Run Evaluation Script**: Evaluates the models' performance.
-8. **Exit**: Exits the program.
+        python models/Decision_Tree/decision_tree.py
 
-### Example Flow:
+- To test an already trained CNN model:
 
-1. Select "1" to run the **Naive Bayes** model (custom implementation).
-2. Wait for the model to train and evaluate, printing the results.
-3. Select "5" to run the **Evaluation Script** and review the results.
+        python models/CNN/cnn.py
 
----
+- Customizing Max depth for Decision Tree(Scikit-Learn): if you want to experiment with different maximum depths, you should modify the max_depths list
 
-## Model Evaluation
+    ```python
+    def main():
+    set_random_seeds()
+    max_depths = [10, 20, 50]  # Predefined maximum depths for the Decision Tree
+    for max_depth in max_depths:
+        sklearn_tree = DecisionTreeModelSklearn(max_depth=max_depth)
+        train_features, train_labels = sklearn_tree.load_train_labels_features()
+        test_features, test_labels = sklearn_tree.load_test_labels_features()
+        sklearn_tree.fit(train_features, train_labels)
+        accuracy = sklearn_tree.evaluate_model(test_features, test_labels)
+        sklearn_tree.save_model(f'./output/decision_tree_sklearn_model_{max_depth}.pkl')
+        print(f"Scikit-learn Decision Tree with max_depth={max_depth} Accuracy: {accuracy:.2f}%")```
 
-The models are evaluated using the following metrics:
-- **Accuracy**: Measures the percentage of correct predictions.
-- **Precision**: The proportion of positive predictions that are correct.
-- **Recall**: The proportion of actual positives that were correctly identified.
-- **F1 Score**: The harmonic mean of precision and recall.
+Notes
 
-Confusion matrices are also generated for each model to visualize misclassifications.
-
----
-
-## Requirements
-
-To run the code, ensure that the following dependencies are installed:
-
-```bash
-pip install torch torchvision scikit-learn numpy matplotlib
-```
-
-Additionally, the project requires access to the CIFAR-10 dataset, which can be downloaded via the `torchvision.datasets` module.
+	•	File Locations: Ensure all files remain in their respective directories for smooth execution.
