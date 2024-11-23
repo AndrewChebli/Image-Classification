@@ -1,2 +1,5 @@
 *.pkl filter=lfs diff=lfs merge=lfs -text
 cnn_kernel_size_3_default.pth filter=lfs diff=lfs merge=lfs -text
+cnn_kernel_size_3_remove_last_layer.pth filter=lfs diff=lfs merge=lfs -text
+cnn_kernel_size_3_add_extra_layer.pth filter=lfs diff=lfs merge=lfs -text
+cnn_kernel_size_5_default.pth filter=lfs diff=lfs merge=lfs -text
