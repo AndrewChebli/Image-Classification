@@ -136,7 +136,7 @@ def set_random_seeds(seed):
     from sklearn.utils import check_random_state
     check_random_state(seed)
 
-if __name__ == "__main__":
+def main():
     set_random_seeds(seed=88)
     naive_Bayes = NaiveBayesModel()
 
@@ -157,4 +157,7 @@ if __name__ == "__main__":
 
      # Save the trained model
     naive_Bayes.save_model('./output/naive_bayes_model.pkl')
+
+if __name__ == "__main__":
+    main()
 
