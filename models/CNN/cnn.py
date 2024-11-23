@@ -5,10 +5,12 @@ import torch.utils.data as td
 import torchvision.datasets as datasets
 from torchvision import transforms
 import os
+import numpy as np
 from torch.utils.data import Dataset
 import torch.nn.functional as F
 import torch
 import PIL.Image as Image
+import random
 
 # Function to load CIFAR10 dataset
 
@@ -138,7 +140,6 @@ class CNN(nn.Module):
     def train_model(self, train_loader, eval_loader, device, optimizer, criterion, num_epochs, save_path):
         best_acc = 0
         best_model = None
-
         for epoch in range(num_epochs):
             self.train() # set the model to train mode
             running_loss = 0
@@ -162,7 +163,6 @@ class CNN(nn.Module):
 
             acc = correct / total * 100
             print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {loss.item():.4f}, Accuracy: {acc:.2f}%")
-
             if acc > best_acc:
                 best_acc = acc
                 best_model = self.state_dict()
@@ -204,6 +204,11 @@ class CNN(nn.Module):
                 predictions = torch.max(output, 1)[1]  # Get the predicted class
                 all_predictions.extend(predictions.cpu().numpy())
         return all_predictions
+    
+    def save_model(self, filename):
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        torch.save(self.state_dict(), filename)
+        print(f"Model saved to {filename}")
 
 def remove_last_layer(model):
     layers = list(model.features.children())
@@ -228,6 +233,13 @@ def remove_last_layer(model):
     )
     return model
 
+def set_random_seeds(seed=88):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+
+
 def add_extra_conv_layer(model, kernel_size=3):
     padding = kernel_size // 2
     # Add a convolutional layer with the same input/output channels as the last Conv2d in the model
@@ -242,13 +254,13 @@ def add_extra_conv_layer(model, kernel_size=3):
     return model
 
 if __name__ == '__main__':
-
+    set_random_seeds()
     batch_size = 32
     test_batch_size = 32
     input_size = 3 * 32 * 32  # 3 channels, 32x32 image size
-    # hidden_size = 50  # Number of hidden units
     output_size = 10  # Number of output classes (CIFAR-10 has 10 classes)
     num_epochs = 50
+    models_dir = './output/'  # Directory where CNN model files are saved
 
 
     train_dataset, test_dataset = cifar_loader(batch_size)
@@ -256,26 +268,38 @@ if __name__ == '__main__':
     device = torch.device("mps" if torch.backends.mps.is_available() else "cuda:0" if torch.cuda.is_available() else "cpu")
     # model = CNN(input_size, output_size)
     # model.to(device)
+    criterion = nn.CrossEntropyLoss()
 
     
     action = input("Enter 'train', 'test': ").strip().lower()
 
     if action in ["train", "test"]:
-        modify_action = input("Do you want to 'remove_last_layer' or 'add_extra_layer'  or 'adjust_kernel_size'? (leave blank for none): ").strip().lower()
-        if modify_action == "remove_last_layer":
-            model = CNN(input_size, output_size).to(device)
-            model = remove_last_layer(model)
-        elif modify_action == "adjust_kernel_size":
-            new_kernel_size = int(input("Enter new kernel size: "))
-            model = CNN(input_size, output_size, new_kernel_size).to(device)
-        elif modify_action == "add_extra_layer":
-            model = CNN(input_size, output_size).to(device)
-            model = add_extra_conv_layer(model)
 
         if action == "train":
-            criterion = nn.CrossEntropyLoss()
-            optimizer = optim.SGD(model.parameters(), lr = 0.001, momentum=0.9)
             
+            modify_action = input("Do you want to 'remove_last_layer' or 'add_extra_layer'  or 'adjust_kernel_size'? (leave blank for none): ").strip().lower()
+            kernel_size = 3
+            modification = "default"
+            
+            if modify_action == "adjust_kernel_size":
+                kernel_size = int(input("Enter new kernel size: "))
+                
+            model = CNN(input_size, output_size, kernel_size).to(device)
+
+            if modify_action == "remove_last_layer":
+                model = remove_last_layer(model)
+                modification = "remove_last_layer"
+            elif modify_action == "add_extra_layer":
+                model = add_extra_conv_layer(model)
+                modification = "add_extra_layer"   
+            
+            # Prepare the filename to include both kernel size and modification type
+            model_suffix = f"kernel_size_{kernel_size}_{modification}"
+            save_path = os.path.join(models_dir, f"cnn_{model_suffix}.pth")
+
+                
+            optimizer = optim.SGD(model.parameters(), lr = 0.001, momentum=0.9)
+                
             # Split the training dataset into 90% training and 10% evaluation
             train_size = int(0.9 * len(train_dataset))
             eval_size = len(train_dataset) - train_size
@@ -284,23 +308,55 @@ if __name__ == '__main__':
             #to get the data in batches
             train_loader = td.DataLoader(train_subset, batch_size=batch_size, shuffle=True, pin_memory=True)
             eval_loader = td.DataLoader(eval_subset, batch_size=batch_size, shuffle=False, pin_memory=True)
-            model.train_model(train_loader, eval_loader, device, optimizer, criterion, num_epochs, './output/cnn_model.pth')
-        elif action == "test":
             
-            #to get the data in batches
-            test_loader = td.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
+            model.train_model(train_loader, eval_loader, device, optimizer, criterion, num_epochs, save_path)
+            
+        elif action == "test":
+            # Scan directory for all saved CNN models
+            cnn_files = [f for f in os.listdir(models_dir) if f.startswith('cnn') and f.endswith('.pth')]
 
-            # Load the state dict
-            state_dict = torch.load('./output/cnn_model.pth')
+            if not cnn_files:
+                print("No CNN models found in the output directory.")
+            else:
+                print("Available CNN models:")
+                for idx, file in enumerate(cnn_files, start=1):
+                    print(f"{idx}. {file}")
+                
+                choice = int(input("Select a model to test (enter the number): "))
+                selected_model_file = cnn_files[choice - 1]
+                print(f"Selected model: {selected_model_file}")
+                
+                
+                # Determine the model configuration based on the filename
+                kernel_size = int(selected_model_file.split('_')[3])
 
-            # Create a new state dict with matching keys
-            new_state_dict = model.state_dict()
-            for key in state_dict:
-                if key in new_state_dict and state_dict[key].shape == new_state_dict[key].shape:
-                    new_state_dict[key] = state_dict[key]
+                model = CNN(input_size, output_size, kernel_size).to(device)
 
-            # Load the new state dict into the model
-            model.load_state_dict(new_state_dict, strict=False)
+                if "remove_last_layer" in selected_model_file:
+                    model = remove_last_layer(model)
+                elif "add_extra_layer" in selected_model_file:
+                    model = add_extra_conv_layer(model)
+                # elif "kernel_size" in selected_model_file:
+                #     kernel_size = int(selected_model_file.split('_')[-1].replace('.pth', ''))
+                #     model = CNN(input_size, output_size, kernel_size).to(device)
+                # else:
+                #     model = CNN(input_size, output_size).to(device)  # Default configuration
+                    
+                    
+                    
+                #to get the data in batches
+                test_loader = td.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
-            model.to(device)
-            model.test_model(test_loader, device, criterion)
+                # # Create a new state dict with matching keys
+                # new_state_dict = model.state_dict()
+                # for key in state_dict:
+                #     if key in new_state_dict and state_dict[key].shape == new_state_dict[key].shape:
+                #         new_state_dict[key] = state_dict[key]
+                # Load the state dict
+                state_dict = torch.load(os.path.join(models_dir, selected_model_file))
+
+                # Load the new state dict into the model
+                model.load_state_dict(state_dict)
+
+                model.to(device)
+                model.test_model(test_loader, device, criterion)
