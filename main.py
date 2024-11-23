@@ -47,7 +47,7 @@ from models.Naive_Bayes.naive_bayes_scikit import main as naive_bayes_scikit_mai
 from models.Decision_Tree.decision_tree import main as decision_tree_main
 from models.Decision_Tree.decision_tree_scikit import main as decision_tree_scikit_main
 from models.MLP.mlp import main as mlp_main
-# from models.CNN.cnn import main as cnn_main
+from models.CNN.cnn import main as cnn_main
 from Evaluation.evaluation import main as evaluate_all_models
 
 def display_menu():
@@ -84,7 +84,7 @@ def handle_user_input(choice):
         mlp_main()  # Calls the main function of the MLP model
     elif choice == "6":
         print("\nRunning CNN Model...\n")
-        # cnn_main()  # Calls the main function of the CNN model
+        cnn_main()  # Calls the main function of the CNN model
     elif choice == "7":
         print("\nRunning Evaluation Script...\n")
         print(f"Current Working Directory: {os.getcwd()}")
