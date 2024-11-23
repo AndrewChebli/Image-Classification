@@ -189,6 +189,9 @@ def evaluate_all_models():
 
         # Load model weights
         model.load_state_dict(torch.load(os.path.join(models_dir, cnn_file)))
+        
+        #move model to the correct device
+        model = model.to(device)
 
         # Evaluate model
         accuracy, precision, recall, f1 = evaluate_cnn_model(model, test_loader, device, cnn_file, pdf)

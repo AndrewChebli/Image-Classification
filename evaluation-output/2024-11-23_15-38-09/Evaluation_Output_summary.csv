@@ -1,0 +1,18 @@
+Model,Accuracy,Precision,Recall,F1 Score
+Naive Bayes,0.792,0.79703,0.792,0.79236
+Naive Bayes Scikit,0.792,0.79703,0.792,0.79236
+Decision Tree - Max Depth: 10,0.599,0.60449,0.599,0.60024
+Decision Tree - Max Depth: 20,0.578,0.58082,0.578,0.57821
+Decision Tree - Max Depth: 50,0.585,0.58858,0.585,0.58609
+Decision Tree Scikit - Max Depth: 10,0.601,0.61398,0.601,0.60497
+Decision Tree Scikit - Max Depth: 20,0.586,0.5895,0.586,0.58615
+Decision Tree Scikit - Max Depth: 50,0.589,0.58854,0.589,0.58827
+MLP - Network Depth: 2-layer,0.773,0.77231,0.773,0.77141
+MLP - Network Depth: 1 hidden layer,0.751,0.75416,0.751,0.74996
+MLP - Network Depth: 3-layer MLP,0.781,0.78509,0.781,0.77969
+MLP - Network Depth: Smaller hidden layers,0.724,0.72971,0.724,0.71954
+MLP - Network Depth: Larger hidden layers,0.794,0.79777,0.794,0.79358
+cnn_kernel_size_3_add_extra_layer.pth,0.719,0.72485,0.719,0.71888
+cnn_kernel_size_3_remove_last_layer.pth,0.699,0.73683,0.699,0.68622
+cnn_kernel_size_3_default.pth,0.731,0.72982,0.731,0.72679
+cnn_kernel_size_5_default.pth,0.676,0.68588,0.676,0.67508
