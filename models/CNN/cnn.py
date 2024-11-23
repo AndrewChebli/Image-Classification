@@ -253,7 +253,7 @@ def add_extra_conv_layer(model, kernel_size=3):
     print(f"Added an extra convolutional layer with kernel size {kernel_size}")
     return model
 
-if __name__ == '__main__':
+def main():
     set_random_seeds()
     batch_size = 32
     test_batch_size = 32
@@ -360,3 +360,6 @@ if __name__ == '__main__':
 
                 model.to(device)
                 model.test_model(test_loader, device, criterion)
+                
+if __name__ == '__main__':
+    main()
