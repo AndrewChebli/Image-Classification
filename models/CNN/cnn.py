@@ -55,51 +55,51 @@ def cifar_loader(batch_size, shuffle_test=False):
 
 
 class CNN(nn.Module):
-    def __init__(self,input_size, hidden_size, output_size):
+    def __init__(self,input_size, output_size, kernel_size=3):
         super().__init__()
-
+        padding = kernel_size // 2
         self.features = nn.Sequential(
             #layer 1:
-            nn.Conv2d(3, 64, 3, 1, 1),
+            nn.Conv2d(3, 64, kernel_size=kernel_size, padding=padding),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
             nn.MaxPool2d(2, 2),
             
             #layer 2
-            nn.Conv2d(64, 128, 3, 1, 1),
+            nn.Conv2d(64, 128, kernel_size=kernel_size, padding =padding),
             nn.BatchNorm2d(128),
             nn.ReLU(True),
             nn.MaxPool2d(2, 2),
             
             #layer 3
-            nn.Conv2d(128, 256, 3, 1, 1),
+            nn.Conv2d(128, 256, kernel_size=kernel_size, padding=padding),
             nn.BatchNorm2d(256),
             nn.ReLU(True),
             
             #layer 4
-            nn.Conv2d(256, 256, 3, 1, 1),
+            nn.Conv2d(256, 256, kernel_size=kernel_size, padding=padding),
             nn.BatchNorm2d(256),
             nn.ReLU(True),
             nn.MaxPool2d(2, 2), 
             
             #layer 5
-            nn.Conv2d(256, 512, 3, 1, 1),
+            nn.Conv2d(256, 512, kernel_size=kernel_size, padding=padding),
             nn.BatchNorm2d(512),
             nn.ReLU(True), 
             
             #layer 6
-            nn.Conv2d(512, 512, 3, 1, 1),
+            nn.Conv2d(512, 512, kernel_size=kernel_size, padding=padding),
             nn.BatchNorm2d(512),
             nn.ReLU(True),
             nn.MaxPool2d(2, 2),   
             
             #layer 7
-            nn.Conv2d(512, 512, 3, 1, 1),
+            nn.Conv2d(512, 512, kernel_size=kernel_size, padding=padding),
             nn.BatchNorm2d(512),
             nn.ReLU(True),  
             
             #layer 8
-            nn.Conv2d(512, 512, 3, 1, 1),
+            nn.Conv2d(512, 512, kernel_size=kernel_size, padding=padding),
             nn.BatchNorm2d(512),
             nn.ReLU(True),
             nn.MaxPool2d(2, 2)        
@@ -115,7 +115,6 @@ class CNN(nn.Module):
             nn.Linear(4096, 10)
 
         )
-       
 
     def forward(self, x):
         # pass through the 8 convolutional layers
@@ -127,9 +126,9 @@ class CNN(nn.Module):
         return x
     
     @staticmethod
-    def load_model(filename, input_size=3 * 32 * 32, hidden_size=10, num_classes=10):
+    def load_model(filename, input_size=3 * 32 * 32, kernel_size=3, num_classes=10):
         # Initialize a new instance of the MLP model
-        model = CNN(input_size, hidden_size, num_classes)
+        model = CNN(input_size=input_size, kernel_size=kernel_size, output_size=num_classes)
         
         # Load the model parameters from the file
         model.load_state_dict(torch.load(filename))
@@ -205,6 +204,43 @@ class CNN(nn.Module):
                 predictions = torch.max(output, 1)[1]  # Get the predicted class
                 all_predictions.extend(predictions.cpu().numpy())
         return all_predictions
+
+def remove_last_layer(model):
+    layers = list(model.features.children())
+    for i in range(len(layers) - 1, -1, -1):
+        if isinstance(layers[i], nn.Conv2d):
+            break
+    model.features = nn.Sequential(*layers[:i])
+    
+    # Calculate the new input size for the first fully connected layer
+    num_maxpool_layers = sum(1 for layer in model.features if isinstance(layer, nn.MaxPool2d))
+    new_input_size = 512 * (32 // (2 ** num_maxpool_layers)) * (32 // (2 ** num_maxpool_layers))
+    print(f"new input size is : {new_input_size}")
+    
+    model.classifier = nn.Sequential(
+        nn.Linear(new_input_size, 4096),
+        nn.ReLU(True),
+        nn.Dropout(0.5),
+        nn.Linear(4096, 4096),
+        nn.ReLU(True),
+        nn.Dropout(0.5),
+        nn.Linear(4096, 10)
+    )
+    return model
+
+def add_extra_conv_layer(model, kernel_size=3):
+    padding = kernel_size // 2
+    # Add a convolutional layer with the same input/output channels as the last Conv2d in the model
+    new_layer = nn.Conv2d(512, 512, kernel_size=kernel_size, padding=padding)
+    model.features = nn.Sequential(
+        *list(model.features.children()),  # Existing layers
+        new_layer,                         # New layer
+        nn.BatchNorm2d(512),               # Add BatchNorm2d for consistency
+        nn.ReLU(True)                      # Activation function
+    )
+    print(f"Added an extra convolutional layer with kernel size {kernel_size}")
+    return model
+
 if __name__ == '__main__':
 
     batch_size = 32
@@ -218,26 +254,53 @@ if __name__ == '__main__':
     train_dataset, test_dataset = cifar_loader(batch_size)
 
     device = torch.device("mps" if torch.backends.mps.is_available() else "cuda:0" if torch.cuda.is_available() else "cpu")
-    model = CNN(input_size, 10, output_size)
-    model.to(device)
+    # model = CNN(input_size, output_size)
+    # model.to(device)
 
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr = 0.001, momentum=0.9)
     
-    # Split the training dataset into 90% training and 10% evaluation
-    train_size = int(0.9 * len(train_dataset))
-    eval_size = len(train_dataset) - train_size
-    train_subset, eval_subset = torch.utils.data.random_split(train_dataset, [train_size, eval_size])
-    
-    #to get the data in batches
-    train_loader = td.DataLoader(train_subset, batch_size=batch_size, shuffle=True, pin_memory=True)
-    eval_loader = td.DataLoader(eval_subset, batch_size=batch_size, shuffle=False, pin_memory=True)
-    test_loader = td.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
-    
-    action = input("Enter 'train' or 'test': ").strip().lower()
+    action = input("Enter 'train', 'test': ").strip().lower()
 
-    if action == "train":
-        model.train_model(train_loader, eval_loader, device, optimizer, criterion, num_epochs, './output/cnn_model.pth')
-    elif action == "test":
-        model.load_state_dict(torch.load('./output/cnn_model.pth'))
-        model.test_model(test_loader, device, criterion)
+    if action in ["train", "test"]:
+        modify_action = input("Do you want to 'remove_last_layer' or 'add_extra_layer'  or 'adjust_kernel_size'? (leave blank for none): ").strip().lower()
+        if modify_action == "remove_last_layer":
+            model = CNN(input_size, output_size).to(device)
+            model = remove_last_layer(model)
+        elif modify_action == "adjust_kernel_size":
+            new_kernel_size = int(input("Enter new kernel size: "))
+            model = CNN(input_size, output_size, new_kernel_size).to(device)
+        elif modify_action == "add_extra_layer":
+            model = CNN(input_size, output_size).to(device)
+            model = add_extra_conv_layer(model)
+
+        if action == "train":
+            criterion = nn.CrossEntropyLoss()
+            optimizer = optim.SGD(model.parameters(), lr = 0.001, momentum=0.9)
+            
+            # Split the training dataset into 90% training and 10% evaluation
+            train_size = int(0.9 * len(train_dataset))
+            eval_size = len(train_dataset) - train_size
+            train_subset, eval_subset = torch.utils.data.random_split(train_dataset, [train_size, eval_size])
+            
+            #to get the data in batches
+            train_loader = td.DataLoader(train_subset, batch_size=batch_size, shuffle=True, pin_memory=True)
+            eval_loader = td.DataLoader(eval_subset, batch_size=batch_size, shuffle=False, pin_memory=True)
+            model.train_model(train_loader, eval_loader, device, optimizer, criterion, num_epochs, './output/cnn_model.pth')
+        elif action == "test":
+            
+            #to get the data in batches
+            test_loader = td.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
+
+            # Load the state dict
+            state_dict = torch.load('./output/cnn_model.pth')
+
+            # Create a new state dict with matching keys
+            new_state_dict = model.state_dict()
+            for key in state_dict:
+                if key in new_state_dict and state_dict[key].shape == new_state_dict[key].shape:
+                    new_state_dict[key] = state_dict[key]
+
+            # Load the new state dict into the model
+            model.load_state_dict(new_state_dict, strict=False)
+
+            model.to(device)
+            model.test_model(test_loader, device, criterion)
