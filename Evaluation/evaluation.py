@@ -188,7 +188,7 @@ def evaluate_all_models():
             model = add_extra_conv_layer(model)
 
         # Load model weights
-        model.load_state_dict(torch.load(os.path.join(models_dir, cnn_file)))
+        model.load_state_dict(torch.load(os.path.join(models_dir, cnn_file ),map_location="cpu"))
         
         #move model to the correct device
         model = model.to(device)
