@@ -1,5 +1,18 @@
 # Image Classification System
 
+## Table of Contents
+1. [Project Overview](#project-overview)
+2. [Project Structure](#project-structure)
+3. [Setup Instructions](#setup-instructions)
+4. [Running the Main Menu](#1-running-the-main-menu)
+5. [Running Specific Models](#2-running-specific-models)
+6. [Evaluating Models](#3-evaluating-models)
+7. [Output and Reports](#4-output-and-reports)
+8. [Customization Notes](#customization-notes)
+9. [Instructions for Dataset](#instructions-for-dataset)
+10. [Example Commands](#example-commands)
+11. [IMPORTANT](#⚠️-important)
+
 ## Project Overview
 
 This project implements an Image Classification System using various machine learning models including Naive Bayes, Decision Trees, Multilayer Perceptrons (MLP), and Convolutional Neural Networks (CNNs). The system supports training, evaluation, and prediction using these models on image datasets.
@@ -31,7 +44,7 @@ This project implements an Image Classification System using various machine lea
     |-- README.md: Project documentation.
     |-- report/: Contains additional documentation and reporting files (if any).
 
-Setup Instructions
+### Setup Instructions
 
 Prerequisites
 
@@ -41,19 +54,19 @@ Steps
 
 	1.	Clone the repository to your local machine.
 
-git clone <repository_url>
-cd Image-Classification
+		git clone <repository_url>
+		cd Image-Classification
 
 
 	2.	Create and activate a virtual environment:
 
-python -m venv .venv
-source .venv/bin/activate (On Mac)
+		python -m venv .venv
+		source .venv/bin/activate (On Mac)
 
 
 	3.	Install the required dependencies:
 
-pip install -r requirements.txt
+		pip install -r requirements.txt
 
 
 	4.	Download and preprocess the dataset (CIFAR-10 is used):
@@ -62,9 +75,14 @@ pip install -r requirements.txt
 
 ## 1. Running the Main Menu
 
+[!important]
+Before running the main menu or any model, make sure to run the data_loader.py to download and preprocess the CIFAR10 data.
+
+	python data/dataloader.py
+
 Run the project entry point:
 
-python main.py
+	python main.py
 
 You will see a menu with the following options:
 	•	Run Naive Bayes Model (Custom/Scikit-Learn)
@@ -117,7 +135,7 @@ Project Features
 
 ### Instructions for Dataset
 
-    - The CIFAR-10 dataset is automatically downloaded when the models are executed. Ensure your system has internet access during the first run.
+    - Run data_loader.py before trying to run any other code. Ensure your system has internet access during the first run.
 
 ## Example Commands
 
@@ -144,6 +162,7 @@ Project Features
         sklearn_tree.save_model(f'./output/decision_tree_sklearn_model_{max_depth}.pkl')
         print(f"Scikit-learn Decision Tree with max_depth={max_depth} Accuracy: {accuracy:.2f}%")```
 
-Notes
+## ⚠️ IMPORTANT
 
-	•	File Locations: Ensure all files remain in their respective directories for smooth execution.
+	- In case there is an error running evaluation.py from main.py, re run main.py and go through all the models again, so run naive bayes(both models), decision trees(both models), MLP and CNN
+	- File Locations: Ensure all files remain in their respective directories for smooth execution.
