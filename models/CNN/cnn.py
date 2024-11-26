@@ -267,8 +267,6 @@ def main():
     train_dataset, test_dataset = cifar_loader(batch_size)
 
     device = torch.device("mps" if torch.backends.mps.is_available() else "cuda:0" if torch.cuda.is_available() else "cpu")
-    # model = CNN(input_size, output_size)
-    # model.to(device)
     criterion = nn.CrossEntropyLoss()
 
     
@@ -337,22 +335,12 @@ def main():
                     model = remove_last_layer(model)
                 elif "add_extra_layer" in selected_model_file:
                     model = add_extra_conv_layer(model)
-                # elif "kernel_size" in selected_model_file:
-                #     kernel_size = int(selected_model_file.split('_')[-1].replace('.pth', ''))
-                #     model = CNN(input_size, output_size, kernel_size).to(device)
-                # else:
-                #     model = CNN(input_size, output_size).to(device)  # Default configuration
                     
                     
                     
                 #to get the data in batches
                 test_loader = td.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
-                # # Create a new state dict with matching keys
-                # new_state_dict = model.state_dict()
-                # for key in state_dict:
-                #     if key in new_state_dict and state_dict[key].shape == new_state_dict[key].shape:
-                #         new_state_dict[key] = state_dict[key]
                 # Load the state dict
                 state_dict = torch.load(os.path.join(models_dir, selected_model_file))
 
