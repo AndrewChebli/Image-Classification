@@ -11,7 +11,13 @@
 8. [Customization Notes](#customization-notes)
 9. [Instructions for Dataset](#instructions-for-dataset)
 10. [Example Commands](#example-commands)
-11. [IMPORTANT](#⚠️-important)
+
+
+## ⚠️ IMPORTANT
+
+- In case there is an error running evaluation.py from main.py, re run main.py and go through all the models again, so run naive bayes(both models), decision trees(both models), MLP and CNN
+- File Locations: Ensure all files remain in their respective directories for smooth execution.
+- ### Before running the main menu or any model, make sure to run the data_loader.py to download and preprocess the CIFAR10 data.
 
 ## Project Overview
 
@@ -75,8 +81,8 @@ Steps
 
 ## 1. Running the Main Menu
 
-[!important]
-Before running the main menu or any model, make sure to run the data_loader.py to download and preprocess the CIFAR10 data.
+Important:
+- Before running the main menu or any model, make sure to run the data_loader.py to download and preprocess the CIFAR10 data.
 
 	python data/dataloader.py
 
@@ -161,8 +167,3 @@ Project Features
         accuracy = sklearn_tree.evaluate_model(test_features, test_labels)
         sklearn_tree.save_model(f'./output/decision_tree_sklearn_model_{max_depth}.pkl')
         print(f"Scikit-learn Decision Tree with max_depth={max_depth} Accuracy: {accuracy:.2f}%")```
-
-## ⚠️ IMPORTANT
-
-	- In case there is an error running evaluation.py from main.py, re run main.py and go through all the models again, so run naive bayes(both models), decision trees(both models), MLP and CNN
-	- File Locations: Ensure all files remain in their respective directories for smooth execution.
